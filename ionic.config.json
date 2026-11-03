@@ -1,0 +1,7 @@
+{
+  "name": "palanche",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
