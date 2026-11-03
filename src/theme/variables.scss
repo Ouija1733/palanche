@@ -25,15 +25,23 @@
   --pal-warning-text: #b45309;
   --pal-danger: #b91c1c;
 
-  // Category colors: icon color; the soft background is derived below.
-  --pal-cat-groceries: #0f766e;
-  --pal-cat-restaurants: #c2410c;
-  --pal-cat-transport: #1d4ed8;
-  --pal-cat-home: #6d28d9;
-  --pal-cat-leisure: #be185d;
-  --pal-cat-health: #b91c1c;
-  --pal-cat-bills: #a16207;
-  --pal-cat-other: #5b615e;
+  // Category colors, by palette key (the value stored in categories.color).
+  // Used for the category icon; its soft background is mixed from the same
+  // color by the category icon component.
+  --pal-cat-teal: #0f766e;
+  --pal-cat-violet: #6d28d9;
+  --pal-cat-ochre: #a16207;
+  --pal-cat-orange: #c2410c;
+  --pal-cat-blue: #1d4ed8;
+  --pal-cat-cyan: #0e7490;
+  --pal-cat-red: #b91c1c;
+  --pal-cat-pink: #be185d;
+  --pal-cat-fuchsia: #a21caf;
+  --pal-cat-green: #15803d;
+  --pal-cat-brown: #92400e;
+  --pal-cat-indigo: #4338ca;
+  --pal-cat-slate: #475569;
+  --pal-cat-gray: #5b615e;
 
   // Typography
   --pal-font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -77,32 +85,23 @@
     --pal-warning-text: #fbbf24;
     --pal-danger: #f87171;
 
-    --pal-cat-groceries: #2dd4bf;
-    --pal-cat-restaurants: #fb923c;
-    --pal-cat-transport: #60a5fa;
-    --pal-cat-home: #a78bfa;
-    --pal-cat-leisure: #f472b6;
-    --pal-cat-health: #f87171;
-    --pal-cat-bills: #facc15;
-    --pal-cat-other: #a3aaa6;
+    --pal-cat-teal: #2dd4bf;
+    --pal-cat-violet: #a78bfa;
+    --pal-cat-ochre: #facc15;
+    --pal-cat-orange: #fb923c;
+    --pal-cat-blue: #60a5fa;
+    --pal-cat-cyan: #22d3ee;
+    --pal-cat-red: #f87171;
+    --pal-cat-pink: #f472b6;
+    --pal-cat-fuchsia: #e879f9;
+    --pal-cat-green: #4ade80;
+    --pal-cat-brown: #d6a06b;
+    --pal-cat-indigo: #818cf8;
+    --pal-cat-slate: #94a3b8;
+    --pal-cat-gray: #a3aaa6;
 
     --pal-fab-shadow: 0 8px 20px rgb(0 0 0 / 45%);
   }
-}
-
-// Soft category backgrounds: the category color blended into the card color,
-// so they work in both themes without a second set of values.
-:root,
-:root.md,
-:root.ios {
-  --pal-cat-groceries-soft: color-mix(in srgb, var(--pal-cat-groceries) 12%, var(--pal-surface));
-  --pal-cat-restaurants-soft: color-mix(in srgb, var(--pal-cat-restaurants) 12%, var(--pal-surface));
-  --pal-cat-transport-soft: color-mix(in srgb, var(--pal-cat-transport) 12%, var(--pal-surface));
-  --pal-cat-home-soft: color-mix(in srgb, var(--pal-cat-home) 12%, var(--pal-surface));
-  --pal-cat-leisure-soft: color-mix(in srgb, var(--pal-cat-leisure) 12%, var(--pal-surface));
-  --pal-cat-health-soft: color-mix(in srgb, var(--pal-cat-health) 12%, var(--pal-surface));
-  --pal-cat-bills-soft: color-mix(in srgb, var(--pal-cat-bills) 12%, var(--pal-surface));
-  --pal-cat-other-soft: color-mix(in srgb, var(--pal-cat-other) 12%, var(--pal-surface));
 }
 
 // Ionic mapping. Ionic needs some colors also as "r, g, b" triplets (for
