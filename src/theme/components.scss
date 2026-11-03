@@ -9,3 +9,87 @@ ion-toast.pal-toast {
   --box-shadow: none;
   font-weight: var(--pal-font-semibold);
 }
+
+// Page layout shared by every page (kept global so each page stylesheet stays small).
+
+ion-content.pal-page {
+  --background: var(--pal-bg);
+  --padding-start: var(--pal-page-padding);
+  --padding-end: var(--pal-page-padding);
+  --padding-top: calc(var(--ion-safe-area-top, 0px) + 8px);
+  // Room for the FAB, so it never covers the last element.
+  --padding-bottom: 96px;
+}
+
+.pal-card {
+  display: block;
+  padding: 16px;
+  border-radius: var(--pal-radius-card);
+  background: var(--pal-surface);
+}
+
+.pal-card + .pal-card,
+app-balance-card + .pal-card {
+  margin-top: var(--pal-card-gap);
+}
+
+.pal-section-title {
+  margin: 0;
+  font-size: var(--pal-fs-section-title);
+  font-weight: var(--pal-font-bold);
+}
+
+.pal-label {
+  font-size: var(--pal-fs-caption);
+  font-weight: var(--pal-font-bold);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--pal-text-muted);
+}
+
+.pal-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--pal-text-muted);
+}
+
+.pal-empty strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: var(--pal-fs-section-title);
+  color: var(--pal-text);
+}
+
+// Primary and secondary full-width buttons (no Ionic button: simpler to match the mockups).
+.pal-button {
+  min-height: 52px;
+  padding: 0 20px;
+  border: 2px solid var(--pal-primary);
+  border-radius: var(--pal-radius-control);
+  background: var(--pal-primary);
+  color: var(--pal-on-primary);
+  font: inherit;
+  font-size: 16px;
+  font-weight: var(--pal-font-bold);
+}
+
+.pal-button.secondary {
+  background: var(--pal-surface);
+  color: var(--pal-primary);
+}
+
+.pal-button:disabled {
+  opacity: 0.45;
+}
+
+// The "+" button for a new transaction: 60px, 20px corners, the only shadow of the app.
+ion-fab-button.pal-fab {
+  --background: var(--pal-primary);
+  --background-activated: var(--pal-primary);
+  --color: var(--pal-on-primary);
+  --border-radius: var(--pal-radius-fab);
+  --box-shadow: var(--pal-fab-shadow);
+  width: var(--pal-fab-size);
+  height: var(--pal-fab-size);
+  font-size: 30px;
+}
