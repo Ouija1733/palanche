@@ -1,0 +1,11 @@
+// Global styles for Ionic overlays (toasts, modals), which live outside the
+// page components and therefore cannot be styled from their own stylesheets.
+
+ion-toast.pal-toast {
+  --background: #16181d;
+  --color: #ffffff;
+  --button-color: #2dd4bf;
+  --border-radius: 16px;
+  --box-shadow: none;
+  font-weight: var(--pal-font-semibold);
+}
