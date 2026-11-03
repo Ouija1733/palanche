@@ -1,12 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 
 import { DatabaseService } from '../db/database.service';
-import type { SqlExecutor } from '../db/sql-executor';
+import type { SqlExecutor, SqlValue } from '../db/sql-executor';
 import type { Account, AccountChanges, AccountType, NewAccount } from '../models/account';
 import { nowIso } from '../utils/dates';
 import { uuidV4 } from '../utils/uuid';
 
-import { buildAssignments } from './sql';
+import { buildAssignments, placeholders, upsertRows } from './sql';
 
 /** Row as stored in SQLite (snake_case, booleans as 0/1). */
 interface AccountRow {
@@ -22,8 +22,19 @@ interface AccountRow {
   deleted_at: string | null;
 }
 
-const COLUMNS = `id, name, type, currency, initial_balance_cents, archived, sort_order,
-  created_at, updated_at, deleted_at`;
+const COLUMN_LIST = [
+  'id',
+  'name',
+  'type',
+  'currency',
+  'initial_balance_cents',
+  'archived',
+  'sort_order',
+  'created_at',
+  'updated_at',
+  'deleted_at',
+] as const;
+const COLUMNS = COLUMN_LIST.join(', ');
 
 /** Model field → column, for the fields that `update()` may change. */
 const UPDATABLE_COLUMNS = {
@@ -48,6 +59,22 @@ function toAccount(row: AccountRow): Account {
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
   };
+}
+
+/** Values in COLUMN_LIST order. */
+function toValues(account: Account): SqlValue[] {
+  return [
+    account.id,
+    account.name,
+    account.type,
+    account.currency,
+    account.initialBalanceCents,
+    Number(account.archived),
+    account.sortOrder,
+    account.createdAt,
+    account.updatedAt,
+    account.deletedAt,
+  ];
 }
 
 /**
@@ -93,19 +120,24 @@ export class AccountsRepository {
       updatedAt: now,
       deletedAt: null,
     };
-    await db.run(`INSERT INTO accounts (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-      account.id,
-      account.name,
-      account.type,
-      account.currency,
-      account.initialBalanceCents,
-      Number(account.archived),
-      account.sortOrder,
-      account.createdAt,
-      account.updatedAt,
-      account.deletedAt,
-    ]);
+    await db.run(`INSERT INTO accounts (${COLUMNS}) VALUES (${placeholders(COLUMN_LIST.length)})`, toValues(account));
     return account;
+  }
+
+  // Backup: whole table, deleted rows included, ids and timestamps preserved.
+
+  async findAllIncludingDeleted(db: SqlExecutor = this.database.db): Promise<Account[]> {
+    const rows = await db.query<AccountRow>(`SELECT ${COLUMNS} FROM accounts ORDER BY created_at, id`);
+    return rows.map(toAccount);
+  }
+
+  async upsertAll(accounts: readonly Account[], db: SqlExecutor = this.database.db): Promise<void> {
+    await upsertRows(db, 'accounts', COLUMN_LIST, accounts.map(toValues));
+  }
+
+  /** Physically empties the table: only for "replace everything" restores. */
+  async deleteAll(db: SqlExecutor = this.database.db): Promise<void> {
+    await db.run('DELETE FROM accounts');
   }
 
   /** Changes the given fields and bumps updated_at. Throws if the account does not exist. */

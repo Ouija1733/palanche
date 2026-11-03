@@ -28,4 +28,19 @@ export class SettingsRepository {
     const rows = await db.query<{ key: string; value: string | null }>('SELECT key, value FROM settings ORDER BY key');
     return Object.fromEntries(rows.map((row) => [row.key, row.value]));
   }
+
+  /** Writes many keys at once, unknown keys included (backup restore). */
+  async setMany(values: Readonly<Record<string, string | null>>, db: SqlExecutor = this.database.db): Promise<void> {
+    for (const [key, value] of Object.entries(values)) {
+      await db.run(
+        'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value',
+        [key, value],
+      );
+    }
+  }
+
+  /** Physically empties the table: only for "replace everything" restores. */
+  async deleteAll(db: SqlExecutor = this.database.db): Promise<void> {
+    await db.run('DELETE FROM settings');
+  }
 }

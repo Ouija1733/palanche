@@ -2,11 +2,11 @@ import { inject, Injectable } from '@angular/core';
 
 import { DatabaseService } from '../db/database.service';
 import type { SqlExecutor } from '../db/sql-executor';
-import type { Tag } from '../models/tag';
+import type { Tag, TransactionTag } from '../models/tag';
 import { nowIso } from '../utils/dates';
 import { uuidV4 } from '../utils/uuid';
 
-import { placeholders } from './sql';
+import { placeholders, upsertRows } from './sql';
 
 interface TagRow {
   id: string;
@@ -20,6 +20,26 @@ function toTag(row: TagRow): Tag {
   return {
     id: row.id,
     name: row.name,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
+  };
+}
+
+interface TransactionTagRow {
+  id: string;
+  transaction_id: string;
+  tag_id: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+function toTransactionTag(row: TransactionTagRow): TransactionTag {
+  return {
+    id: row.id,
+    transactionId: row.transaction_id,
+    tagId: row.tag_id,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
@@ -109,5 +129,41 @@ export class TagsRepository {
         [uuidV4(), transactionId, tagId, now, now],
       );
     }
+  }
+
+  // Backup: whole tables, deleted rows included, ids and timestamps preserved.
+
+  async findAllIncludingDeleted(db: SqlExecutor = this.database.db): Promise<Tag[]> {
+    const rows = await db.query<TagRow>('SELECT * FROM tags ORDER BY created_at, id');
+    return rows.map(toTag);
+  }
+
+  async findAllLinksIncludingDeleted(db: SqlExecutor = this.database.db): Promise<TransactionTag[]> {
+    const rows = await db.query<TransactionTagRow>('SELECT * FROM transaction_tags ORDER BY created_at, id');
+    return rows.map(toTransactionTag);
+  }
+
+  async upsertAll(tags: readonly Tag[], db: SqlExecutor = this.database.db): Promise<void> {
+    await upsertRows(
+      db,
+      'tags',
+      ['id', 'name', 'created_at', 'updated_at', 'deleted_at'],
+      tags.map((tag) => [tag.id, tag.name, tag.createdAt, tag.updatedAt, tag.deletedAt]),
+    );
+  }
+
+  async upsertAllLinks(links: readonly TransactionTag[], db: SqlExecutor = this.database.db): Promise<void> {
+    await upsertRows(
+      db,
+      'transaction_tags',
+      ['id', 'transaction_id', 'tag_id', 'created_at', 'updated_at', 'deleted_at'],
+      links.map((link) => [link.id, link.transactionId, link.tagId, link.createdAt, link.updatedAt, link.deletedAt]),
+    );
+  }
+
+  /** Physically empties both tables: only for "replace everything" restores. */
+  async deleteAll(db: SqlExecutor = this.database.db): Promise<void> {
+    await db.run('DELETE FROM transaction_tags');
+    await db.run('DELETE FROM tags');
   }
 }

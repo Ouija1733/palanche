@@ -1,4 +1,4 @@
-import type { SqlValue } from '../db/sql-executor';
+import type { SqlExecutor, SqlValue } from '../db/sql-executor';
 
 /** "?, ?, ?" for an IN (…) list or a VALUES row. */
 export function placeholders(count: number): string {
@@ -23,6 +23,24 @@ export function buildAssignments<T extends object>(
     }
   }
   return { assignments, values };
+}
+
+/**
+ * Inserts rows exactly as given (ids and timestamps included), updating the
+ * existing row with the same id. Used by backup restore and merge.
+ */
+export async function upsertRows(
+  db: SqlExecutor,
+  table: string,
+  columns: readonly string[],
+  rows: readonly (readonly SqlValue[])[],
+): Promise<void> {
+  const updates = columns.filter((column) => column !== 'id').map((column) => `${column} = excluded.${column}`);
+  const sql = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${placeholders(columns.length)})
+    ON CONFLICT (id) DO UPDATE SET ${updates.join(', ')}`;
+  for (const row of rows) {
+    await db.run(sql, row);
+  }
 }
 
 /** Escapes % and _ for a LIKE pattern used with ESCAPE '\'. */

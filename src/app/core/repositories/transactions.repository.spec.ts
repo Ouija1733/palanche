@@ -121,9 +121,12 @@ describe('TransactionsRepository', () => {
     });
 
     it('orders by date, then by creation within the same day, and pages', async () => {
+      vi.useFakeTimers({ now: new Date('2026-11-15T09:00:00Z'), toFake: ['Date'] });
       const first = await expense(100, '2026-11-15');
+      vi.setSystemTime(new Date('2026-11-15T09:05:00Z'));
       const second = await expense(200, '2026-11-15');
       await expense(300, '2026-11-14');
+      vi.useRealTimers();
 
       const all = await transactions.search();
       expect(all.map((t) => t.amountCents)).toEqual([200, 100, 300]);
@@ -132,6 +135,13 @@ describe('TransactionsRepository', () => {
 
       const page = await transactions.search({}, { limit: 2, offset: 1 });
       expect(page.map((t) => t.amountCents)).toEqual([100, 300]);
+    });
+
+    it('breaks ties on the same creation time by id, so the order survives a backup restore', async () => {
+      vi.useFakeTimers({ now: new Date('2026-11-15T09:00:00Z'), toFake: ['Date'] });
+      const ids = [(await expense(1, '2026-11-15')).id, (await expense(2, '2026-11-15')).id];
+      vi.useRealTimers();
+      expect((await transactions.search()).map((t) => t.id)).toEqual([...ids].sort().reverse());
     });
 
     it('filters by period (inclusive)', async () => {

@@ -1,13 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 
 import { DatabaseService } from '../db/database.service';
-import type { SqlExecutor } from '../db/sql-executor';
+import type { SqlExecutor, SqlValue } from '../db/sql-executor';
 import type { Category, CategoryChanges, CategoryKind, NewCategory } from '../models/category';
 import type { CategoryColor } from '../models/category-palette';
 import { nowIso } from '../utils/dates';
 import { uuidV4 } from '../utils/uuid';
 
-import { buildAssignments } from './sql';
+import { buildAssignments, placeholders, upsertRows } from './sql';
 
 interface CategoryRow {
   id: string;
@@ -22,7 +22,19 @@ interface CategoryRow {
   deleted_at: string | null;
 }
 
-const COLUMNS = 'id, parent_id, name, kind, icon, color, sort_order, created_at, updated_at, deleted_at';
+const COLUMN_LIST = [
+  'id',
+  'parent_id',
+  'name',
+  'kind',
+  'icon',
+  'color',
+  'sort_order',
+  'created_at',
+  'updated_at',
+  'deleted_at',
+] as const;
+const COLUMNS = COLUMN_LIST.join(', ');
 
 const UPDATABLE_COLUMNS = {
   name: 'name',
@@ -44,6 +56,22 @@ function toCategory(row: CategoryRow): Category {
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
   };
+}
+
+/** Values in COLUMN_LIST order. */
+function toValues(category: Category): SqlValue[] {
+  return [
+    category.id,
+    category.parentId,
+    category.name,
+    category.kind,
+    category.icon,
+    category.color,
+    category.sortOrder,
+    category.createdAt,
+    category.updatedAt,
+    category.deletedAt,
+  ];
 }
 
 /** The only place with SQL for the `categories` table. Deleted rows are never returned. */
@@ -95,19 +123,31 @@ export class CategoriesRepository {
       updatedAt: now,
       deletedAt: null,
     };
-    await db.run(`INSERT INTO categories (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-      category.id,
-      category.parentId,
-      category.name,
-      category.kind,
-      category.icon,
-      category.color,
-      category.sortOrder,
-      category.createdAt,
-      category.updatedAt,
-      category.deletedAt,
-    ]);
+    await db.run(
+      `INSERT INTO categories (${COLUMNS}) VALUES (${placeholders(COLUMN_LIST.length)})`,
+      toValues(category),
+    );
     return category;
+  }
+
+  // Backup: whole table, deleted rows included, ids and timestamps preserved.
+
+  async findAllIncludingDeleted(db: SqlExecutor = this.database.db): Promise<Category[]> {
+    const rows = await db.query<CategoryRow>(
+      `SELECT ${COLUMNS} FROM categories ORDER BY parent_id IS NOT NULL, created_at, id`,
+    );
+    return rows.map(toCategory);
+  }
+
+  /** Main categories are written first, so subcategories always find their parent. */
+  async upsertAll(categories: readonly Category[], db: SqlExecutor = this.database.db): Promise<void> {
+    const ordered = [...categories].sort((a, b) => Number(a.parentId !== null) - Number(b.parentId !== null));
+    await upsertRows(db, 'categories', COLUMN_LIST, ordered.map(toValues));
+  }
+
+  /** Physically empties the table: only for "replace everything" restores. */
+  async deleteAll(db: SqlExecutor = this.database.db): Promise<void> {
+    await db.run('DELETE FROM categories');
   }
 
   /** Changes the given fields and bumps updated_at. Throws if the category does not exist. */

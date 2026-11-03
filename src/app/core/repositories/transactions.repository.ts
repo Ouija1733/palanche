@@ -17,7 +17,7 @@ import type { IsoDate } from '../utils/dates';
 import { nowIso } from '../utils/dates';
 import { uuidV4 } from '../utils/uuid';
 
-import { buildAssignments, likeContains, placeholders } from './sql';
+import { buildAssignments, likeContains, placeholders, upsertRows } from './sql';
 
 interface TransactionRow {
   id: string;
@@ -44,8 +44,21 @@ interface TransactionListRow extends TransactionRow {
   tag_names: string | null;
 }
 
-const COLUMNS = `id, type, amount_cents, account_id, to_account_id, category_id, date, payee, note,
-  created_at, updated_at, deleted_at`;
+const COLUMN_LIST = [
+  'id',
+  'type',
+  'amount_cents',
+  'account_id',
+  'to_account_id',
+  'category_id',
+  'date',
+  'payee',
+  'note',
+  'created_at',
+  'updated_at',
+  'deleted_at',
+] as const;
+const COLUMNS = COLUMN_LIST.join(', ');
 
 const UPDATABLE_COLUMNS = {
   type: 'type',
@@ -79,6 +92,24 @@ function toTransaction(row: TransactionRow): Transaction {
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
   };
+}
+
+/** Values in COLUMN_LIST order. */
+function toValues(transaction: Transaction): SqlValue[] {
+  return [
+    transaction.id,
+    transaction.type,
+    transaction.amountCents,
+    transaction.accountId,
+    transaction.toAccountId,
+    transaction.categoryId,
+    transaction.date,
+    transaction.payee,
+    transaction.note,
+    transaction.createdAt,
+    transaction.updatedAt,
+    transaction.deletedAt,
+  ];
 }
 
 function toListItem(row: TransactionListRow): TransactionListItem {
@@ -181,7 +212,7 @@ export class TransactionsRepository {
        LEFT JOIN categories c ON c.id = t.category_id
        LEFT JOIN categories p ON p.id = c.parent_id
        WHERE ${where}
-       ORDER BY t.date DESC, t.created_at DESC, t.rowid DESC
+       ORDER BY t.date DESC, t.created_at DESC, t.id DESC
        LIMIT ? OFFSET ?`,
       [...params, page.limit ?? -1, page.offset ?? 0],
     );
@@ -303,21 +334,27 @@ export class TransactionsRepository {
       updatedAt: now,
       deletedAt: null,
     };
-    await db.run(`INSERT INTO transactions (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-      transaction.id,
-      transaction.type,
-      transaction.amountCents,
-      transaction.accountId,
-      transaction.toAccountId,
-      transaction.categoryId,
-      transaction.date,
-      transaction.payee,
-      transaction.note,
-      transaction.createdAt,
-      transaction.updatedAt,
-      transaction.deletedAt,
-    ]);
+    await db.run(
+      `INSERT INTO transactions (${COLUMNS}) VALUES (${placeholders(COLUMN_LIST.length)})`,
+      toValues(transaction),
+    );
     return transaction;
+  }
+
+  // Backup: whole table, deleted rows included, ids and timestamps preserved.
+
+  async findAllIncludingDeleted(db: SqlExecutor = this.database.db): Promise<Transaction[]> {
+    const rows = await db.query<TransactionRow>(`SELECT ${COLUMNS} FROM transactions ORDER BY created_at, id`);
+    return rows.map(toTransaction);
+  }
+
+  async upsertAll(transactions: readonly Transaction[], db: SqlExecutor = this.database.db): Promise<void> {
+    await upsertRows(db, 'transactions', COLUMN_LIST, transactions.map(toValues));
+  }
+
+  /** Physically empties the table: only for "replace everything" restores. */
+  async deleteAll(db: SqlExecutor = this.database.db): Promise<void> {
+    await db.run('DELETE FROM transactions');
   }
 
   /** Changes the given fields and bumps updated_at. Throws if the transaction does not exist. */
