@@ -196,7 +196,7 @@ Selettore del mese, card saldo, barra di avanzamento budget, riga movimento, ico
 
 ## Stato delle fasi
 
-- [ ] Fase 0 — Setup (fatto: app id `dev.ouija.palanche`, SQLite nativo + web, migrazione 001, struttura cartelle, utility money/dates/uuid, repository accounts, token di design e Manrope, tutto verificato su browser ed emulatore; manca la verifica sul telefono fisico)
+- [x] Fase 0 — Setup (chiusa con la verifica sull'emulatore; la prova sul telefono fisico si fa alla fine della fase 1)
 - [ ] Fase 1 — MVP: registrare e salvare
 - [ ] Fase 2 — Controllo
 - [ ] Fase 3 — Automazione

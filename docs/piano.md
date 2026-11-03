@@ -234,6 +234,8 @@ Progetto Ionic + Capacitor, piattaforma Android, SQLite con sistema di migrazion
 - [x] La migrazione 001 crea tutte le tabelle della fase 1
 - [x] Un test d'esempio su un repository passa
 
+Chiusa il 3 novembre 2026 con la verifica sull'emulatore (browser ed emulatore: migrazione applicata una sola volta, dati persistenti). La prova sul telefono fisico è rimandata alla fine della fase 1.
+
 ### Fase 1 — MVP: registrare e salvare
 
 Onboarding, conti, categorie predefinite, nuovo movimento, lista movimenti, export e import JSON.
