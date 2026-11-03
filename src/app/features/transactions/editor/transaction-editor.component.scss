@@ -1,0 +1,141 @@
+.editor {
+  --background: var(--pal-surface);
+  --padding-start: var(--pal-page-padding);
+  --padding-end: var(--pal-page-padding);
+  --padding-top: 16px;
+  --padding-bottom: calc(16px + var(--ion-safe-area-bottom, 0px));
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.top h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: var(--pal-font-extrabold);
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--pal-text);
+  font-size: 28px;
+}
+
+.icon-button.danger {
+  color: var(--pal-danger);
+  font-size: 24px;
+}
+
+.amount-block {
+  padding: 14px 0 8px;
+  text-align: center;
+}
+
+.amount {
+  font-size: var(--pal-fs-amount-input);
+  font-weight: var(--pal-font-extrabold);
+  letter-spacing: -1px;
+}
+
+.amount.empty {
+  color: var(--pal-text-muted);
+}
+
+.caret {
+  display: inline-block;
+  width: 3px;
+  height: 0.9em;
+  margin-left: 4px;
+  vertical-align: -0.1em;
+  background: var(--pal-primary);
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.section {
+  margin: 4px 0 8px;
+}
+
+.transfer,
+.when {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.transfer > ion-icon {
+  flex: none;
+  font-size: 22px;
+  color: var(--pal-text-muted);
+}
+
+.when {
+  margin-top: 10px;
+}
+
+.more-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 6px;
+  padding: 0 4px;
+  background: none;
+  font-size: 15px;
+  font-weight: var(--pal-font-semibold);
+}
+
+.more {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 4px 10px;
+  border: 1px solid var(--pal-border);
+  border-radius: var(--pal-radius-control);
+}
+
+.tag-input {
+  flex: 1;
+  min-width: 120px;
+  min-height: 40px;
+  background: none;
+  font-size: 16px;
+  outline: none;
+}
+
+.keypad {
+  margin-top: 8px;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.actions.single {
+  grid-template-columns: 1fr;
+}

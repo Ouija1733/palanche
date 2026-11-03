@@ -1,0 +1,173 @@
+<ion-content class="editor">
+  <div class="top">
+    <button type="button" class="icon-button" aria-label="Chiudi" (click)="close()">
+      <ion-icon name="close-outline" />
+    </button>
+    <h2>{{ isEdit() ? 'Modifica movimento' : 'Nuovo movimento' }}</h2>
+    @if (isEdit()) {
+      <button type="button" class="icon-button danger" aria-label="Elimina movimento" (click)="remove()">
+        <ion-icon name="trash-outline" />
+      </button>
+    } @else {
+      <span class="icon-button" aria-hidden="true"></span>
+    }
+  </div>
+
+  <div class="pal-segment" role="radiogroup" aria-label="Tipo di movimento">
+    @for (option of types; track option) {
+      <button
+        type="button"
+        role="radio"
+        [attr.aria-checked]="type() === option"
+        [class.active]="type() === option"
+        (click)="setType(option)"
+      >
+        {{ typeLabels[option] }}
+      </button>
+    }
+  </div>
+
+  <div class="amount-block">
+    <span class="pal-label">Importo</span>
+    <div class="amount" [class.empty]="!amountText()" aria-live="polite">
+      {{ amountLabel() }}<span class="caret" aria-hidden="true"></span>
+    </div>
+  </div>
+
+  @if (type() === 'transfer') {
+    <div class="transfer">
+      <button type="button" class="pal-box" (click)="pickAccount('from')">
+        <span class="pal-label">Da</span>
+        <span class="value">{{ accountName() }}</span>
+      </button>
+      <ion-icon name="swap-horizontal-outline" aria-hidden="true" />
+      <button type="button" class="pal-box" (click)="pickAccount('to')">
+        <span class="pal-label">A</span>
+        <span class="value">{{ toAccountName() }}</span>
+      </button>
+    </div>
+  } @else {
+    <p class="pal-label section">Categoria · più usate</p>
+    <app-category-grid
+      [categories]="grid()"
+      [selectedId]="categoryId()"
+      [moreSelected]="pickedOutsideGrid()"
+      [moreLabel]="pickedOutsideGrid() ? selectedCategory()!.name : 'Altre'"
+      (selected)="categoryId.set($event.id)"
+      (more)="pickCategory()"
+    />
+  }
+
+  <div class="when">
+    @if (type() !== 'transfer') {
+      <button type="button" class="pal-box" (click)="pickAccount('from')">
+        <span class="pal-label">Conto</span>
+        <span class="value">{{ accountName() }}</span>
+      </button>
+    }
+    <button type="button" class="pal-choice" [class.active]="dateChoice() === 'today'" (click)="setDate('today')">
+      Oggi
+    </button>
+    <button
+      type="button"
+      class="pal-choice"
+      [class.active]="dateChoice() === 'yesterday'"
+      (click)="setDate('yesterday')"
+    >
+      Ieri
+    </button>
+    <button
+      type="button"
+      class="pal-choice"
+      [class.active]="dateChoice() === 'other'"
+      [attr.aria-label]="'Scegli la data, ora ' + dateLabel()"
+      (click)="calendarOpen.set(true)"
+    >
+      @if (dateChoice() === 'other') {
+        {{ dateLabel() }}
+      } @else {
+        <ion-icon name="calendar-outline" aria-hidden="true" />
+      }
+    </button>
+  </div>
+
+  <button type="button" class="more-toggle" [attr.aria-expanded]="moreOpen()" (click)="moreOpen.set(!moreOpen())">
+    <span>Altro: nota, beneficiario, tag</span>
+    <ion-icon [name]="moreOpen() ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true" />
+  </button>
+  @if (moreOpen()) {
+    <div class="more">
+      <input
+        class="pal-input"
+        type="text"
+        placeholder="Beneficiario (es. Esselunga)"
+        maxlength="80"
+        [value]="payee()"
+        (input)="payee.set(inputValue($event))"
+      />
+      <input
+        class="pal-input"
+        type="text"
+        placeholder="Nota"
+        maxlength="200"
+        [value]="note()"
+        (input)="note.set(inputValue($event))"
+      />
+      <div class="tags">
+        @for (tag of tags(); track tag) {
+          <button type="button" class="pal-tag" [attr.aria-label]="'Togli il tag ' + tag" (click)="removeTag(tag)">
+            #{{ tag }} <ion-icon name="close-outline" aria-hidden="true" />
+          </button>
+        }
+        <input
+          class="tag-input"
+          type="text"
+          placeholder="Aggiungi tag"
+          maxlength="30"
+          enterkeyhint="done"
+          [value]="tagDraft()"
+          (input)="tagDraft.set(inputValue($event))"
+          (keydown)="onTagKey($event)"
+          (blur)="addTag()"
+        />
+      </div>
+      @if (tagSuggestions().length > 0) {
+        <div class="pal-chips">
+          @for (name of tagSuggestions(); track name) {
+            <button
+              type="button"
+              class="pal-tag suggestion"
+              (mousedown)="$event.preventDefault()"
+              (click)="addTag(name)"
+            >
+              #{{ name }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <app-amount-keypad class="keypad" (pressed)="typeKey($event)" />
+
+  <div class="actions" [class.single]="isEdit()">
+    @if (!isEdit()) {
+      <button type="button" class="pal-button secondary" [disabled]="!canSave()" (click)="save(true)">
+        Salva e aggiungi
+      </button>
+    }
+    <button type="button" class="pal-button" [disabled]="!canSave()" (click)="save(false)">Salva</button>
+  </div>
+
+  <ion-modal class="pal-calendar" [isOpen]="calendarOpen()" (didDismiss)="calendarOpen.set(false)">
+    <ng-template>
+      <ion-datetime
+        presentation="date"
+        locale="it-IT"
+        [firstDayOfWeek]="1"
+        [value]="date()"
+        (ionChange)="onCalendarChange($event)"
+      />
+    </ng-template>
+  </ion-modal>
+</ion-content>

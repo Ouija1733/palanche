@@ -7,7 +7,7 @@ import { IonIcon, IonLabel, IonTabBar, IonTabButton, IonTabs } from '@ionic/angu
   imports: [IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel],
   template: `
     <ion-tabs>
-      <ion-tab-bar slot="bottom">
+      <ion-tab-bar id="pal-tab-bar" slot="bottom">
         @for (tab of tabs; track tab.path) {
           <ion-tab-button [tab]="tab.path">
             <ion-icon [name]="tab.icon" aria-hidden="true"></ion-icon>

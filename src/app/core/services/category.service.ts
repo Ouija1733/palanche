@@ -46,6 +46,11 @@ export class CategoryService {
   private readonly categories = inject(CategoriesRepository);
   private readonly transactions = inject(TransactionsRepository);
 
+  /** All active categories of a kind (main and sub), in display order. */
+  async list(kind: CategoryKind): Promise<Category[]> {
+    return this.categories.findAll({ kind });
+  }
+
   /** Main categories of a kind, each with its subcategories, in display order. */
   async getTree(kind: CategoryKind): Promise<CategoryNode[]> {
     const all = await this.categories.findAll({ kind });

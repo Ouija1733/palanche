@@ -131,3 +131,153 @@ ion-fab-button.pal-fab {
 .pal-chips.wrap {
   flex-wrap: wrap;
 }
+
+// Bottom sheets (new transaction, category picker).
+ion-modal.pal-sheet {
+  --background: var(--pal-surface);
+  --border-radius: 24px;
+}
+
+ion-modal.pal-sheet::part(handle) {
+  width: 56px;
+  background: var(--pal-border);
+}
+
+// Calendar opened from the date button: a small centered dialog.
+ion-modal.pal-calendar {
+  --width: min(340px, calc(100% - 32px));
+  --height: auto;
+  --border-radius: 20px;
+}
+
+ion-modal.pal-calendar .ion-page {
+  position: relative;
+  display: block;
+  contain: content;
+}
+
+ion-modal.pal-calendar ion-datetime {
+  --background: var(--pal-surface);
+  --ion-color-primary: var(--pal-primary);
+  --ion-color-primary-contrast: var(--pal-on-primary);
+}
+
+ion-action-sheet.pal-action-sheet .selected {
+  color: var(--pal-primary);
+  font-weight: var(--pal-font-bold);
+}
+
+// Controls shared by the forms (segment, labelled box, choice button, tag).
+.pal-segment button,
+.pal-box,
+.pal-choice,
+.pal-tag {
+  border: 0;
+  color: var(--pal-text);
+  font: inherit;
+}
+
+.pal-segment {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-top: 12px;
+  padding: 4px;
+  border-radius: var(--pal-radius-control);
+  background: var(--pal-track);
+}
+
+.pal-segment button,
+.pal-choice,
+.pal-box,
+.more-toggle,
+.tag,
+.tag-input {
+  border: 0;
+  color: var(--pal-text);
+  font: inherit;
+}
+
+.pal-segment button {
+  min-height: 44px;
+  border-radius: 11px;
+  background: none;
+  color: var(--pal-text-muted);
+  font-size: 15px;
+  font-weight: var(--pal-font-semibold);
+}
+
+.pal-segment button.active {
+  background: var(--pal-surface);
+  color: var(--pal-text);
+}
+
+.pal-box {
+  flex: 1;
+  min-width: 0;
+  min-height: 60px;
+  padding: 8px 14px;
+  border: 1px solid var(--pal-border);
+  border-radius: var(--pal-radius-control);
+  background: var(--pal-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.pal-box .pal-label {
+  text-transform: none;
+  font-weight: var(--pal-font-regular);
+  letter-spacing: 0;
+}
+
+.pal-box .value {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: var(--pal-font-semibold);
+}
+
+.pal-choice {
+  flex: none;
+  min-width: 56px;
+  min-height: 60px;
+  padding: 0 12px;
+  border: 1px solid var(--pal-border);
+  border-radius: var(--pal-radius-control);
+  background: var(--pal-surface);
+  font-size: 16px;
+  font-weight: var(--pal-font-semibold);
+  display: grid;
+  place-items: center;
+}
+
+.pal-choice ion-icon {
+  font-size: 22px;
+}
+
+.pal-choice.active {
+  border: 2px solid var(--pal-primary);
+  background: var(--pal-primary-soft);
+  color: var(--pal-primary);
+}
+
+.pal-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--pal-primary-soft);
+  color: var(--pal-primary);
+  font-weight: var(--pal-font-semibold);
+}
+
+.pal-tag.suggestion {
+  background: var(--pal-track);
+  color: var(--pal-text);
+}

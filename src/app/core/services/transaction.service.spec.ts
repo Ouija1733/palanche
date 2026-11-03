@@ -8,6 +8,7 @@ import { CategoriesRepository } from '../repositories/categories.repository';
 import { SettingsRepository } from '../repositories/settings.repository';
 import { TransactionsRepository } from '../repositories/transactions.repository';
 
+import { DataChangesService } from './data-changes.service';
 import type { TransactionInput } from './transaction.service';
 import { TransactionService } from './transaction.service';
 
@@ -133,5 +134,17 @@ describe('TransactionService', () => {
     await service.restore(saved.id);
     const [restored] = await repository.search();
     expect(restored).toEqual(expect.objectContaining({ id: saved.id, tags: ['lampadine'] }));
+  });
+
+  it('tells the pages that the data changed after save, delete and restore', async () => {
+    const changes = TestBed.inject(DataChangesService);
+    const start = changes.version();
+    const saved = await service.save(expense());
+    await service.delete(saved.id);
+    await service.restore(saved.id);
+    expect(changes.version()).toBe(start + 3);
+
+    await expect(service.save(expense({ amountCents: 0 }))).rejects.toThrow();
+    expect(changes.version()).toBe(start + 3);
   });
 });

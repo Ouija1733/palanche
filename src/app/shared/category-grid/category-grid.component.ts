@@ -24,7 +24,7 @@ import type { Category } from '../../core/models/category';
         <span>{{ category.name }}</span>
       </button>
     }
-    <button type="button" class="tile more" (click)="more.emit()">
+    <button type="button" class="tile more" [class.selected]="moreSelected()" (click)="more.emit()">
       <ion-icon name="ellipsis-horizontal-outline" aria-hidden="true"></ion-icon>
       <span>{{ moreLabel() }}</span>
     </button>
@@ -79,6 +79,8 @@ export class CategoryGridComponent {
   readonly selectedId = input<string | null>(null);
   /** "Altre", or the name of a selected category that is not in the grid. */
   readonly moreLabel = input('Altre');
+  /** True when the selected category is not among the tiles (it was picked from "Altre"). */
+  readonly moreSelected = input(false);
 
   readonly selected = output<Category>();
   readonly more = output<void>();

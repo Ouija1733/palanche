@@ -5,6 +5,8 @@ import { errorMessage } from './error-messages';
 
 /** How long a toast with "Annulla" stays visible. */
 const UNDO_DURATION_MS = 5000;
+/** id of the ion-tab-bar in TabsPage. */
+const TAB_BAR_ID = 'pal-tab-bar';
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {
@@ -28,10 +30,23 @@ export class ToastService {
     });
   }
 
+  /**
+   * Inside a bottom sheet the toast goes on top, so it never covers the Save
+   * buttons; otherwise it sits just above the tab bar.
+   */
+  private placement(): { position: 'top' | 'bottom'; positionAnchor?: string } {
+    if (document.querySelector('ion-modal.pal-sheet')) {
+      return { position: 'top' };
+    }
+    return document.getElementById(TAB_BAR_ID)
+      ? { position: 'bottom', positionAnchor: TAB_BAR_ID }
+      : { position: 'bottom' };
+  }
+
   private async show(options: Parameters<ToastController['create']>[0]): Promise<void> {
     // A new toast replaces the previous one instead of stacking.
     await this.toasts.getTop().then((top) => top?.dismiss());
-    const toast = await this.toasts.create({ position: 'bottom', cssClass: 'pal-toast', ...options });
+    const toast = await this.toasts.create({ ...this.placement(), cssClass: 'pal-toast', ...options });
     await toast.present();
   }
 }

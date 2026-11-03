@@ -12,6 +12,7 @@ import { TransactionsRepository } from '../repositories/transactions.repository'
 import type { IsoDate } from '../utils/dates';
 import { isValidIsoDate } from '../utils/dates';
 
+import { DataChangesService } from './data-changes.service';
 import { DomainError } from './domain-error';
 
 /** What the new / edit transaction form sends. */
@@ -62,6 +63,7 @@ export class TransactionService {
   private readonly categories = inject(CategoriesRepository);
   private readonly tags = inject(TagsRepository);
   private readonly settings = inject(SettingsRepository);
+  private readonly changes = inject(DataChangesService);
 
   async getForEdit(id: string): Promise<EditableTransaction | null> {
     const transaction = await this.transactions.findById(id);
@@ -78,27 +80,36 @@ export class TransactionService {
    * The account becomes the preselected one for the next transaction.
    */
   async save(input: TransactionInput, id?: string): Promise<Transaction> {
-    return this.database.db.transaction(async (tx) => {
+    const saved = await this.database.db.transaction(async (tx) => {
       const values = await this.validate(input, tx);
-      const saved = id ? await this.transactions.update(id, values, tx) : await this.transactions.create(values, tx);
+      const result = id ? await this.transactions.update(id, values, tx) : await this.transactions.create(values, tx);
 
       const tagIds: string[] = [];
       for (const name of cleanTags(input.tags)) {
         tagIds.push((await this.tags.findOrCreate(name, tx)).id);
       }
-      await this.tags.setTransactionTags(saved.id, tagIds, tx);
-      await this.settings.set('last_account_id', saved.accountId, tx);
-      return saved;
+      await this.tags.setTransactionTags(result.id, tagIds, tx);
+      await this.settings.set('last_account_id', result.accountId, tx);
+      return result;
     });
+    this.changes.notify();
+    return saved;
   }
 
   /** Soft delete; the tags stay linked so that `restore()` brings them back. */
   async delete(id: string): Promise<void> {
     await this.transactions.softDelete(id);
+    this.changes.notify();
   }
 
   async restore(id: string): Promise<void> {
     await this.transactions.restore(id);
+    this.changes.notify();
+  }
+
+  /** Names of the existing tags, for suggestions while typing. */
+  async getTagNames(): Promise<string[]> {
+    return (await this.tags.findAll()).map((tag) => tag.name);
   }
 
   /** Account to preselect in the form: the last one used, if still active. */

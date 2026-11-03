@@ -27,6 +27,11 @@ export class AccountService {
   private readonly accounts = inject(AccountsRepository);
   private readonly transactions = inject(TransactionsRepository);
 
+  /** Accounts in display order; archived ones only if requested. */
+  async list(options: { includeArchived?: boolean } = {}): Promise<Account[]> {
+    return this.accounts.findAll(options);
+  }
+
   /** Creates an account at the end of the list. */
   async create(input: NewAccount): Promise<Account> {
     assertInitialBalance(input.initialBalanceCents);
