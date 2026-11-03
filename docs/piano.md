@@ -38,13 +38,14 @@ L'MVP copre registrazione, budget ed export. Automazioni e analisi avanzate arri
 | RF13 | Analisi: trend, confronto mesi, tasso di risparmio | 4 |
 | RF14 | Rilevamento abbonamenti e previsione di fine mese | 4 |
 | RF15 | Backup cifrato con password e blocco app con impronta | 4 |
+| RF16 | Obiettivi di risparmio collegati a un conto di risparmio, con avanzamento e quota mensile | 2 |
 
 ### Requisiti non funzionali
 
 - **Solo locale**: nessun backend, nessun account. Nella build di release si rimuove il permesso `INTERNET` dal manifest, così la privacy è garantita dal sistema e non solo dalla buona volontà.
 - **Affidabilità dei dati**: SQLite nativo, migrazioni versionate, cancellazioni logiche (soft delete) con possibilità di annullare.
 - **Velocità**: avvio e apertura del form di inserimento sotto il secondo su un telefono medio.
-- **Importi** sempre in centesimi interi. Valuta di default EUR, una valuta per conto, nessuna conversione nell'MVP.
+- **Importi** sempre in centesimi interi. **Solo EUR**: il campo `currency` resta nel modello dei conti per il futuro, ma l'interfaccia non mostra la scelta della valuta.
 - **Lingua** italiana, tema chiaro e scuro che segue il sistema.
 
 ### Fuori scope
@@ -97,10 +98,40 @@ Ogni pagina ha uno scopo solo. Il pulsante "+" per un nuovo movimento è raggiun
 
 ### Onboarding (solo al primo avvio)
 
-- Scelta della valuta di default.
-- Creazione del primo conto con saldo iniziale.
-- Categorie predefinite: usa il set proposto oppure parti vuoto.
-- Scelta della cartella per i backup automatici (saltabile, si imposta dopo).
+- Creazione del primo conto con saldo iniziale (la valuta è sempre EUR, nessuna scelta).
+- Categorie predefinite (vedi sotto): ognuna, sottocategorie comprese, si può rinominare o spegnere; quelle spente non vengono create.
+- Scelta della cartella per i backup automatici (fase 2, insieme al backup automatico).
+
+#### Categorie predefinite
+
+Le sottocategorie ereditano icona e colore della categoria principale. Icone Ionicons, sempre `-outline`; i colori sono chiavi della palette, con una variante per il tema chiaro e una per lo scuro.
+
+| Spese | Sottocategorie | Icona | Colore |
+| --- | --- | --- | --- |
+| Spesa | | `cart-outline` | teal |
+| Casa | Affitto o mutuo, Condominio, Manutenzione, Arredamento | `home-outline` | violet |
+| Bollette | Luce, Gas, Acqua, Internet e telefono | `flash-outline` | ochre |
+| Ristoranti e bar | Ristoranti, Bar e caffè, Delivery | `restaurant-outline` | orange |
+| Trasporti | Mezzi pubblici, Carburante, Auto, Parcheggi e pedaggi | `train-outline` | blue |
+| Viaggi | Trasporto, Alloggio, Attività | `airplane-outline` | cyan |
+| Salute | Farmacia, Visite mediche, Sport e palestra | `heart-outline` | red |
+| Svago | Uscite, Cinema ed eventi, Videogiochi, Hobby | `film-outline` | pink |
+| Abbonamenti | Streaming, Software e app, Altri abbonamenti | `repeat-outline` | fuchsia |
+| Shopping | Abbigliamento, Elettronica, Regali | `bag-handle-outline` | green |
+| Animali | Cibo, Veterinario | `paw-outline` | brown |
+| Istruzione | Corsi, Libri | `school-outline` | indigo |
+| Tasse e commissioni | Tasse, Commissioni bancarie | `receipt-outline` | slate |
+| Altro | | `ellipsis-horizontal-outline` | gray |
+
+| Entrate | Icona | Colore |
+| --- | --- | --- |
+| Stipendio | `briefcase-outline` | teal |
+| Lavoro extra | `construct-outline` | blue |
+| Rimborsi | `arrow-undo-outline` | cyan |
+| Regali ricevuti | `gift-outline` | pink |
+| Altre entrate | `add-circle-outline` | gray |
+
+I trasferimenti non hanno categoria: in lista usano l'icona `swap-horizontal-outline` in grigio.
 
 ### Home
 
@@ -139,6 +170,13 @@ Il flusso standard è importo → categoria → salva.
 - Azione **Copia dal mese precedente** per non reimpostare tutto ogni mese.
 - Le categorie senza budget ma con spese appaiono in fondo, raggruppate.
 
+### Obiettivi di risparmio (fase 2)
+
+- Un obiettivo ha nome, importo obiettivo, data facoltativa ed è collegato a un conto di tipo risparmio.
+- **Avanzamento** = saldo attuale del conto collegato (sempre calcolato, come ogni saldo), mostrato come barra e percentuale.
+- **Quota mensile necessaria** = (importo obiettivo − saldo) / mesi che mancano alla data; senza data non si mostra.
+- Obiettivo raggiunto quando il saldo arriva all'importo obiettivo.
+
 ### Analisi
 
 - Periodo selezionabile: mese, trimestre, anno, personalizzato.
@@ -160,7 +198,7 @@ Il flusso standard è importo → categoria → salva.
 
 ## Modello dati
 
-Nove tabelle. Tutte hanno `id` (UUID), `created_at`, `updated_at` e `deleted_at`, tranne `settings` e `schema_migrations`.
+Dieci tabelle. Tutte hanno `id` (UUID), `created_at`, `updated_at` e `deleted_at`, tranne `settings` e `schema_migrations`.
 
 | Tabella | Campi principali | Note |
 | --- | --- | --- |
@@ -170,6 +208,7 @@ Nove tabelle. Tutte hanno `id` (UUID), `created_at`, `updated_at` e `deleted_at`
 | `tags` | `name` |  |
 | `transaction_tags` | `transaction_id`, `tag_id` | Tabella ponte |
 | `budgets` | `category_id`, `month` (`YYYY-MM`), `amount_cents` | Una riga per categoria e mese |
+| `savings_goals` | `name`, `target_cents`, `target_date` (facoltativa), `account_id` | Fase 2; l'avanzamento è il saldo del conto, mai salvato |
 | `recurring_rules` | modello del movimento, `frequency`, `next_date`, `end_date` | Fase 3 |
 | `categorization_rules` | `field`, `pattern`, `category_id`, `priority` | Fase 3 |
 | `settings` | `key`, `value` | Preferenze, ultimo backup, versione |
@@ -193,6 +232,7 @@ Il JSON completo è il formato ufficiale dei dati: serve per i backup, per il ri
   "tags": [],
   "transactionTags": [],
   "budgets": [],
+  "savingsGoals": [],
   "recurringRules": [],
   "categorizationRules": [],
   "settings": {}
@@ -247,12 +287,13 @@ Onboarding, conti, categorie predefinite, nuovo movimento, lista movimenti, expo
 
 ### Fase 2 — Controllo
 
-Budget, home completa, notifiche all'80% e al 100%, export CSV, backup automatico.
+Budget, home completa, notifiche all'80% e al 100%, export CSV, backup automatico, obiettivi di risparmio.
 
 - [ ] Un budget sforato mostra la barra rossa e invia una notifica una sola volta
 - [ ] "Copia dal mese precedente" riporta tutti i budget
 - [ ] Il CSV si apre correttamente in Excel e Google Sheets, con accenti e decimali giusti
 - [ ] Il backup automatico scrive nella cartella scelta e tiene solo le ultime N copie
+- [ ] Un obiettivo di risparmio mostra l'avanzamento pari al saldo del conto collegato e la quota mensile necessaria
 
 ### Fase 3 — Automazione
 
@@ -283,8 +324,8 @@ Queste vanno chiuse prima della fase 0 o della fase indicata.
 - [x] **Nome dell'app**: Palanche (package `dev.ouija.palanche`).
 - [ ] **Icona** dell'app.
 - [ ] **Giorno di inizio del mese contabile**: il 1° o il giorno in cui arriva lo stipendio?
-- [ ] **Trasferimenti tra conti** nell'MVP o rimandati alla fase 2?
+- [x] **Trasferimenti tra conti**: inclusi nell'MVP (fase 1).
 - [ ] **Backup automatico di Android** (`allowBackup`): lasciarlo attivo come rete di sicurezza in più, o disattivarlo perché i dati finiscono su Google?
-- [ ] **Categorie predefinite**: quali vuoi trovare al primo avvio?
+- [x] **Categorie predefinite**: vedi "Categorie predefinite" nella specifica dell'onboarding.
 - [ ] **Banca** da cui importerai il CSV in fase 3, per costruire il primo mappatore sul formato reale.
-- [ ] **Più valute**: servono conti in valute diverse da EUR, o basta una sola valuta?
+- [x] **Più valute**: solo EUR. Il campo `currency` resta nel modello, l'interfaccia non mostra la scelta.
