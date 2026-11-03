@@ -1,0 +1,120 @@
+.intro {
+  padding: 16px 0 12px;
+}
+
+.intro h1 {
+  margin: 4px 0 8px;
+  font-size: var(--pal-fs-page-title);
+  font-weight: var(--pal-font-extrabold);
+}
+
+.intro p:not(.pal-label) {
+  margin: 0;
+  color: var(--pal-text-muted);
+}
+
+.balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.amount {
+  font-size: var(--pal-fs-amount-balance);
+  font-weight: var(--pal-font-extrabold);
+}
+
+.amount.negative {
+  color: var(--pal-danger);
+}
+
+.keypad {
+  margin: 16px 0;
+}
+
+.wide {
+  width: 100%;
+}
+
+.bulk {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.link {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--pal-primary);
+  font: inherit;
+  font-weight: var(--pal-font-bold);
+}
+
+.group-title {
+  margin: 20px 0 8px;
+}
+
+.list {
+  padding: 4px 16px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+}
+
+.row + .row {
+  border-top: 1px solid var(--pal-border);
+}
+
+.row.child {
+  padding-left: 50px;
+}
+
+.row.off app-category-icon,
+.row.off .name {
+  opacity: 0.45;
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--pal-text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: var(--pal-font-semibold);
+}
+
+.child .name {
+  font-weight: var(--pal-font-regular);
+}
+
+.expand {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  color: var(--pal-text-muted);
+  font: inherit;
+}
+
+ion-toggle {
+  --track-background-checked: var(--pal-primary);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+  margin-top: 20px;
+}

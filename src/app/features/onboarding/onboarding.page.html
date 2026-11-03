@@ -1,0 +1,118 @@
+<ion-content class="pal-page">
+  @if (step() === 1) {
+  <header class="intro">
+    <p class="pal-label">Passo 1 di 2</p>
+    <h1>Benvenuto in Palanche</h1>
+    <p>Iniziamo dal conto che usi di più. Gli altri potrai aggiungerli dalle impostazioni.</p>
+  </header>
+
+  <section class="pal-card">
+    <label class="pal-field">
+      <span class="pal-label">Nome del conto</span>
+      <input
+        class="pal-input"
+        type="text"
+        maxlength="40"
+        [value]="accountName()"
+        (input)="accountName.set(inputValue($event))"
+      />
+    </label>
+
+    <div class="pal-field">
+      <span class="pal-label">Tipo</span>
+      <div class="pal-chips wrap">
+        @for (type of accountTypes; track type) {
+        <app-filter-chip [active]="type === accountType()" (click)="chooseType(type)">
+          {{ typeLabels[type] }}
+        </app-filter-chip>
+        }
+      </div>
+    </div>
+
+    <div class="pal-field">
+      <span class="pal-label">Saldo di oggi</span>
+      <div class="balance">
+        <span class="amount" [class.negative]="negative()">{{ balanceLabel() }}</span>
+        <app-filter-chip [active]="negative()" (click)="negative.set(!negative())">In rosso</app-filter-chip>
+      </div>
+    </div>
+  </section>
+
+  <app-amount-keypad class="keypad" (pressed)="typeKey($event)" />
+
+  <button type="button" class="pal-button wide" (click)="next()">Avanti</button>
+  } @else {
+  <header class="intro">
+    <p class="pal-label">Passo 2 di 2</p>
+    <h1>Le tue categorie</h1>
+    <p>Ti proponiamo queste. Puoi rinominarle o spegnere quelle che non usi; le modificherai anche in seguito.</p>
+    <div class="bulk">
+      <button type="button" class="link" (click)="setAll(true)">Attiva tutte</button>
+      <button type="button" class="link" (click)="setAll(false)">Parti senza categorie</button>
+    </div>
+  </header>
+
+  @for (group of [{ title: 'Spese', items: expenseCategories() }, { title: 'Entrate', items: incomeCategories() }];
+  track group.title) {
+  <h2 class="pal-label group-title">{{ group.title }}</h2>
+  <section class="pal-card list">
+    @for (item of group.items; track item.index) {
+    <div class="row" [class.off]="!item.category.enabled">
+      <app-category-icon [icon]="item.category.icon" [color]="item.category.color" size="small" />
+      <input
+        class="name"
+        type="text"
+        maxlength="40"
+        [attr.aria-label]="'Nome della categoria ' + item.category.name"
+        [value]="item.category.name"
+        [disabled]="!item.category.enabled"
+        (input)="updateCategory(item.index, { name: inputValue($event) })"
+      />
+      @if (item.category.children.length > 0 && item.category.enabled) {
+      <button
+        type="button"
+        class="expand"
+        [attr.aria-expanded]="item.category.expanded"
+        [attr.aria-label]="'Sottocategorie di ' + item.category.name"
+        (click)="updateCategory(item.index, { expanded: !item.category.expanded })"
+      >
+        {{ item.category.children.length }}
+        <ion-icon [name]="item.category.expanded ? 'chevron-up-outline' : 'chevron-down-outline'" />
+      </button>
+      }
+      <ion-toggle
+        [checked]="item.category.enabled"
+        [attr.aria-label]="'Usa ' + item.category.name"
+        (ionChange)="updateCategory(item.index, { enabled: $event.detail.checked })"
+      />
+    </div>
+    @if (item.category.expanded && item.category.enabled) { @for (child of item.category.children; track $index; let
+    childIndex = $index) {
+    <div class="row child" [class.off]="!child.enabled">
+      <input
+        class="name"
+        type="text"
+        maxlength="40"
+        [attr.aria-label]="'Nome della sottocategoria ' + child.name"
+        [value]="child.name"
+        [disabled]="!child.enabled"
+        (input)="updateChild(item.index, childIndex, { name: inputValue($event) })"
+      />
+      <ion-toggle
+        [checked]="child.enabled"
+        [attr.aria-label]="'Usa ' + child.name"
+        (ionChange)="updateChild(item.index, childIndex, { enabled: $event.detail.checked })"
+      />
+    </div>
+    } } }
+  </section>
+  }
+
+  <div class="actions">
+    <button type="button" class="pal-button secondary" (click)="step.set(1)">Indietro</button>
+    <button type="button" class="pal-button" [disabled]="saving()" (click)="start()">
+      Inizia{{ enabledCount() ? '' : ' senza categorie' }}
+    </button>
+  </div>
+  }
+</ion-content>

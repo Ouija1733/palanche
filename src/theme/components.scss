@@ -93,3 +93,41 @@ ion-fab-button.pal-fab {
   height: var(--pal-fab-size);
   font-size: 30px;
 }
+
+// Text fields: native inputs styled like the mockups (44px+ high, soft border).
+.pal-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--pal-border);
+  border-radius: var(--pal-radius-control);
+  background: var(--pal-surface);
+  color: var(--pal-text);
+  font: inherit;
+  font-size: 16px;
+}
+
+.pal-input:focus {
+  outline: 2px solid var(--pal-primary);
+  outline-offset: -1px;
+}
+
+.pal-field + .pal-field {
+  margin-top: 16px;
+}
+
+.pal-field > .pal-label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.pal-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pal-chips.wrap {
+  flex-wrap: wrap;
+}
