@@ -1,2 +1,178 @@
-// For information on how to create your own theme, please refer to:
-// https://ionicframework.com/docs/theming/
+// Palanche design tokens.
+//
+// Components use the `--pal-*` tokens. The Ionic variables at the bottom are
+// mapped onto them, so Ionic components (toolbar, tabs, items, buttons…) follow
+// the same palette without per-component overrides.
+//
+// The selectors also target `:root.md` / `:root.ios` so they win over Ionic's
+// own palettes (including dark.system.css, imported in global.scss).
+// Every text/background pair below has a contrast ratio of at least 4.5:1.
+
+:root,
+:root.md,
+:root.ios {
+  // Colors (light)
+  --pal-bg: #f4f5f2;
+  --pal-surface: #ffffff;
+  --pal-text: #16181d;
+  --pal-text-muted: #5b615e;
+  --pal-border: #e4e6e3;
+  --pal-track: #eef0ec;
+  --pal-primary: #0f766e;
+  --pal-on-primary: #ffffff;
+  --pal-primary-soft: #e2f2ef;
+  --pal-warning: #d97706;
+  --pal-warning-text: #b45309;
+  --pal-danger: #b91c1c;
+
+  // Category colors: icon color; the soft background is derived below.
+  --pal-cat-groceries: #0f766e;
+  --pal-cat-restaurants: #c2410c;
+  --pal-cat-transport: #1d4ed8;
+  --pal-cat-home: #6d28d9;
+  --pal-cat-leisure: #be185d;
+  --pal-cat-health: #b91c1c;
+  --pal-cat-bills: #a16207;
+  --pal-cat-other: #5b615e;
+
+  // Typography
+  --pal-font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --pal-font-regular: 400;
+  --pal-font-semibold: 600;
+  --pal-font-bold: 700;
+  --pal-font-extrabold: 800;
+  --pal-fs-page-title: 24px;
+  --pal-fs-amount-balance: 34px;
+  --pal-fs-amount-input: 44px;
+  --pal-fs-section-title: 15px;
+  --pal-fs-body: 14px;
+  --pal-fs-secondary: 13px;
+  --pal-fs-caption: 12px;
+
+  // Shape and spacing
+  --pal-radius-card: 18px;
+  --pal-radius-control: 14px;
+  --pal-radius-fab: 20px;
+  --pal-page-padding: 16px;
+  --pal-card-gap: 12px;
+  --pal-touch-min: 44px;
+  --pal-fab-size: 60px;
+  --pal-fab-shadow: 0 8px 20px rgb(15 118 110 / 30%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root,
+  :root.md,
+  :root.ios {
+    --pal-bg: #0f1110;
+    --pal-surface: #1b1e1d;
+    --pal-text: #eceeec;
+    --pal-text-muted: #a3aaa6;
+    --pal-border: #2a2e2c;
+    --pal-track: #252927;
+    --pal-primary: #2dd4bf;
+    --pal-on-primary: #042f2c;
+    --pal-primary-soft: #123a36;
+    --pal-warning: #f59e0b;
+    --pal-warning-text: #fbbf24;
+    --pal-danger: #f87171;
+
+    --pal-cat-groceries: #2dd4bf;
+    --pal-cat-restaurants: #fb923c;
+    --pal-cat-transport: #60a5fa;
+    --pal-cat-home: #a78bfa;
+    --pal-cat-leisure: #f472b6;
+    --pal-cat-health: #f87171;
+    --pal-cat-bills: #facc15;
+    --pal-cat-other: #a3aaa6;
+
+    --pal-fab-shadow: 0 8px 20px rgb(0 0 0 / 45%);
+  }
+}
+
+// Soft category backgrounds: the category color blended into the card color,
+// so they work in both themes without a second set of values.
+:root,
+:root.md,
+:root.ios {
+  --pal-cat-groceries-soft: color-mix(in srgb, var(--pal-cat-groceries) 12%, var(--pal-surface));
+  --pal-cat-restaurants-soft: color-mix(in srgb, var(--pal-cat-restaurants) 12%, var(--pal-surface));
+  --pal-cat-transport-soft: color-mix(in srgb, var(--pal-cat-transport) 12%, var(--pal-surface));
+  --pal-cat-home-soft: color-mix(in srgb, var(--pal-cat-home) 12%, var(--pal-surface));
+  --pal-cat-leisure-soft: color-mix(in srgb, var(--pal-cat-leisure) 12%, var(--pal-surface));
+  --pal-cat-health-soft: color-mix(in srgb, var(--pal-cat-health) 12%, var(--pal-surface));
+  --pal-cat-bills-soft: color-mix(in srgb, var(--pal-cat-bills) 12%, var(--pal-surface));
+  --pal-cat-other-soft: color-mix(in srgb, var(--pal-cat-other) 12%, var(--pal-surface));
+}
+
+// Ionic mapping. Ionic needs some colors also as "r, g, b" triplets (for
+// translucent effects), and those cannot be derived from a CSS variable.
+:root,
+:root.md,
+:root.ios {
+  --ion-font-family: var(--pal-font-family);
+  --ion-background-color: var(--pal-bg);
+  --ion-background-color-rgb: 244, 245, 242;
+  --ion-text-color: var(--pal-text);
+  --ion-text-color-rgb: 22, 24, 29;
+  --ion-border-color: var(--pal-border);
+  --ion-item-background: var(--pal-surface);
+  --ion-card-background: var(--pal-surface);
+  --ion-toolbar-background: var(--pal-bg);
+  --ion-toolbar-border-color: transparent;
+  --ion-tab-bar-background: var(--pal-surface);
+  --ion-tab-bar-border-color: var(--pal-border);
+  --ion-tab-bar-color: var(--pal-text-muted);
+  --ion-tab-bar-color-selected: var(--pal-primary);
+
+  --ion-color-primary: #0f766e;
+  --ion-color-primary-rgb: 15, 118, 110;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #0d6861;
+  --ion-color-primary-tint: #27847d;
+
+  --ion-color-warning: #d97706;
+  --ion-color-warning-rgb: 217, 119, 6;
+  --ion-color-warning-contrast: #000000;
+  --ion-color-warning-contrast-rgb: 0, 0, 0;
+  --ion-color-warning-shade: #bf6905;
+  --ion-color-warning-tint: #dd851f;
+
+  --ion-color-danger: #b91c1c;
+  --ion-color-danger-rgb: 185, 28, 28;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #a31919;
+  --ion-color-danger-tint: #c03333;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root,
+  :root.md,
+  :root.ios {
+    --ion-background-color-rgb: 15, 17, 16;
+    --ion-text-color-rgb: 236, 238, 236;
+
+    --ion-color-primary: #2dd4bf;
+    --ion-color-primary-rgb: 45, 212, 191;
+    --ion-color-primary-contrast: #042f2c;
+    --ion-color-primary-contrast-rgb: 4, 47, 44;
+    --ion-color-primary-shade: #28bba8;
+    --ion-color-primary-tint: #42d8c5;
+
+    --ion-color-warning: #f59e0b;
+    --ion-color-warning-rgb: 245, 158, 11;
+    --ion-color-warning-contrast: #000000;
+    --ion-color-warning-contrast-rgb: 0, 0, 0;
+    --ion-color-warning-shade: #d88b0a;
+    --ion-color-warning-tint: #f6a823;
+
+    --ion-color-danger: #f87171;
+    --ion-color-danger-rgb: 248, 113, 113;
+    --ion-color-danger-contrast: #000000;
+    --ion-color-danger-contrast-rgb: 0, 0, 0;
+    --ion-color-danger-shade: #da6363;
+    --ion-color-danger-tint: #f97f7f;
+  }
+}

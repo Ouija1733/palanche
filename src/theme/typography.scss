@@ -1,0 +1,16 @@
+// Manrope is bundled with the app through @fontsource: no request to Google
+// Fonts. The latin subset covers Italian accents, "€" and "−".
+@import '@fontsource/manrope/latin-400.css';
+@import '@fontsource/manrope/latin-600.css';
+@import '@fontsource/manrope/latin-700.css';
+@import '@fontsource/manrope/latin-800.css';
+
+body {
+  font-family: var(--pal-font-family);
+  font-size: var(--pal-fs-body);
+  font-weight: var(--pal-font-regular);
+  color: var(--pal-text);
+  background: var(--pal-bg);
+  // Tabular figures keep amounts aligned in lists.
+  font-variant-numeric: tabular-nums;
+}
