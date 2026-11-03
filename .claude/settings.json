@@ -13,7 +13,12 @@
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(./gradlew:*)",
+      "Bash(cd android && ./gradlew:*)",
+      "Bash(adb install:*)",
+      "Bash(adb shell:*)",
+      "Bash(adb uninstall:*)"
     ],
     "deny": [
       "Bash(git push:*)",
