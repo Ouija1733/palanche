@@ -1,10 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 
 import { DatabaseService } from '../db/database.service';
-import type { SqlValue } from '../db/sql-executor';
+import type { SqlExecutor } from '../db/sql-executor';
 import type { Account, AccountChanges, AccountType, NewAccount } from '../models/account';
 import { nowIso } from '../utils/dates';
 import { uuidV4 } from '../utils/uuid';
+
+import { buildAssignments } from './sql';
 
 /** Row as stored in SQLite (snake_case, booleans as 0/1). */
 interface AccountRow {
@@ -24,14 +26,14 @@ const COLUMNS = `id, name, type, currency, initial_balance_cents, archived, sort
   created_at, updated_at, deleted_at`;
 
 /** Model field → column, for the fields that `update()` may change. */
-const UPDATABLE_COLUMNS: Record<keyof AccountChanges, string> = {
+const UPDATABLE_COLUMNS = {
   name: 'name',
   type: 'type',
   currency: 'currency',
   initialBalanceCents: 'initial_balance_cents',
   archived: 'archived',
   sortOrder: 'sort_order',
-};
+} as const satisfies Record<keyof AccountChanges, string>;
 
 function toAccount(row: AccountRow): Account {
   return {
@@ -48,22 +50,21 @@ function toAccount(row: AccountRow): Account {
   };
 }
 
-function toSqlValue(value: AccountChanges[keyof AccountChanges]): SqlValue {
-  return typeof value === 'boolean' ? Number(value) : (value ?? null);
-}
-
 /**
  * The only place with SQL for the `accounts` table. Deleted rows (deleted_at
  * set) are never returned: deleting is a soft delete that `restore()` can undo.
+ *
+ * Every method takes an optional `db`: services pass the `tx` of a transaction
+ * to combine several repositories in one atomic operation.
  */
 @Injectable({ providedIn: 'root' })
 export class AccountsRepository {
   private readonly database = inject(DatabaseService);
 
   /** Active accounts in display order; archived ones only if requested. */
-  async findAll(options: { includeArchived?: boolean } = {}): Promise<Account[]> {
+  async findAll(options: { includeArchived?: boolean } = {}, db: SqlExecutor = this.database.db): Promise<Account[]> {
     const archivedFilter = options.includeArchived ? '' : 'AND archived = 0';
-    const rows = await this.database.db.query<AccountRow>(
+    const rows = await db.query<AccountRow>(
       `SELECT ${COLUMNS} FROM accounts
        WHERE deleted_at IS NULL ${archivedFilter}
        ORDER BY sort_order, name COLLATE NOCASE`,
@@ -71,15 +72,14 @@ export class AccountsRepository {
     return rows.map(toAccount);
   }
 
-  async findById(id: string): Promise<Account | null> {
-    const [row] = await this.database.db.query<AccountRow>(
-      `SELECT ${COLUMNS} FROM accounts WHERE id = ? AND deleted_at IS NULL`,
-      [id],
-    );
+  async findById(id: string, db: SqlExecutor = this.database.db): Promise<Account | null> {
+    const [row] = await db.query<AccountRow>(`SELECT ${COLUMNS} FROM accounts WHERE id = ? AND deleted_at IS NULL`, [
+      id,
+    ]);
     return row ? toAccount(row) : null;
   }
 
-  async create(input: NewAccount): Promise<Account> {
+  async create(input: NewAccount, db: SqlExecutor = this.database.db): Promise<Account> {
     const now = nowIso();
     const account: Account = {
       id: uuidV4(),
@@ -93,7 +93,7 @@ export class AccountsRepository {
       updatedAt: now,
       deletedAt: null,
     };
-    await this.database.db.run(`INSERT INTO accounts (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+    await db.run(`INSERT INTO accounts (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
       account.id,
       account.name,
       account.type,
@@ -109,19 +109,14 @@ export class AccountsRepository {
   }
 
   /** Changes the given fields and bumps updated_at. Throws if the account does not exist. */
-  async update(id: string, changes: AccountChanges): Promise<Account> {
-    const fields = (Object.keys(changes) as (keyof AccountChanges)[]).filter(
-      (field) => field in UPDATABLE_COLUMNS && changes[field] !== undefined,
-    );
-    const assignments = fields.map((field) => `${UPDATABLE_COLUMNS[field]} = ?`);
-    const values = fields.map((field) => toSqlValue(changes[field]));
-
-    const { changes: updated } = await this.database.db.run(
+  async update(id: string, changes: AccountChanges, db: SqlExecutor = this.database.db): Promise<Account> {
+    const { assignments, values } = buildAssignments(changes, UPDATABLE_COLUMNS);
+    const { changes: updated } = await db.run(
       `UPDATE accounts SET ${[...assignments, 'updated_at = ?'].join(', ')}
        WHERE id = ? AND deleted_at IS NULL`,
       [...values, nowIso(), id],
     );
-    const account = updated === 1 ? await this.findById(id) : null;
+    const account = updated === 1 ? await this.findById(id, db) : null;
     if (!account) {
       throw new Error(`Account not found: ${id}`);
     }
@@ -129,9 +124,9 @@ export class AccountsRepository {
   }
 
   /** Marks the account as deleted. Returns false if it was not found or already deleted. */
-  async softDelete(id: string): Promise<boolean> {
+  async softDelete(id: string, db: SqlExecutor = this.database.db): Promise<boolean> {
     const now = nowIso();
-    const { changes } = await this.database.db.run(
+    const { changes } = await db.run(
       'UPDATE accounts SET deleted_at = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
       [now, now, id],
     );
@@ -139,8 +134,8 @@ export class AccountsRepository {
   }
 
   /** Undoes a soft delete (the "Annulla" of the toast). Returns false if there was nothing to restore. */
-  async restore(id: string): Promise<boolean> {
-    const { changes } = await this.database.db.run(
+  async restore(id: string, db: SqlExecutor = this.database.db): Promise<boolean> {
+    const { changes } = await db.run(
       'UPDATE accounts SET deleted_at = NULL, updated_at = ? WHERE id = ? AND deleted_at IS NOT NULL',
       [nowIso(), id],
     );
