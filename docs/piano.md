@@ -231,8 +231,8 @@ Sei fasi. Dopo la fase 1 l'app è già usabile ogni giorno; ogni fase si chiude 
 Progetto Ionic + Capacitor, piattaforma Android, SQLite con sistema di migrazioni, struttura a strati, `CLAUDE.md` con le convenzioni.
 
 - [x] L'APK di debug si installa sull'emulatore e apre una pagina vuota
-- [ ] La migrazione 001 crea tutte le tabelle della fase 1
-- [ ] Un test d'esempio su un repository passa
+- [x] La migrazione 001 crea tutte le tabelle della fase 1
+- [x] Un test d'esempio su un repository passa
 
 ### Fase 1 — MVP: registrare e salvare
 

@@ -19,6 +19,8 @@ Documenti di riferimento (leggili prima di iniziare una fase):
 - Ionic + Angular (standalone components, signals dove ha senso) + **Capacitor 8**, solo piattaforma Android
 - Plugin già presenti dal template: `@capacitor/app`, `@capacitor/haptics`, `@capacitor/keyboard`, `@capacitor/status-bar`
 - Database: `@capacitor-community/sqlite` (con supporto web tramite `jeep-sqlite` per sviluppare nel browser)
+  - `sql.js` è bloccato alla versione incorporata in `jeep-sqlite` (oggi 1.11.0): il `sql-wasm.wasm` copiato negli asset deve corrispondere, altrimenti nel browser si ha un `LinkError`. Aggiornarli sempre insieme.
+  - Negli unit test il database è un SQLite vero in memoria (`src/testing/sqljs-executor.ts`) con le migrazioni reali.
 - File e condivisione: `@capacitor/filesystem`, `@capacitor/share`
 - Notifiche: `@capacitor/local-notifications`
 - Grafici: Chart.js
@@ -180,7 +182,7 @@ Selettore del mese, card saldo, barra di avanzamento budget, riga movimento, ico
 
 ## Stato delle fasi
 
-- [ ] Fase 0 — Setup (progetto Ionic + Angular + Capacitor creato, piattaforma Android aggiunta e funzionante sull'emulatore; mancano SQLite, migrazioni, struttura cartelle, utility e test)
+- [ ] Fase 0 — Setup (fatto: app id `dev.ouija.palanche`, SQLite nativo + web, migrazione 001, struttura cartelle, utility money/dates/uuid, repository accounts, token di design e Manrope, tutto verificato su browser ed emulatore; manca la verifica sul telefono fisico)
 - [ ] Fase 1 — MVP: registrare e salvare
 - [ ] Fase 2 — Controllo
 - [ ] Fase 3 — Automazione
