@@ -23,6 +23,11 @@ import { TransactionEditorService } from './transaction-editor.service';
       right: 0;
       bottom: 0;
     }
+    /* Same 16px margin as the page content (Ionic's default is 10px). */
+    ion-fab {
+      inset-inline-end: var(--pal-page-padding);
+      bottom: var(--pal-page-padding);
+    }
   `,
 })
 export class AddTransactionFabComponent {
