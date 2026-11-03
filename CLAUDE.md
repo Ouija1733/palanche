@@ -47,7 +47,8 @@ Le dipendenze sopra non ancora installate sono **previste**, ma vanno comunque p
 ```bash
 npm install                       # dipendenze
 ionic serve                       # sviluppo UI nel browser (SQLite via jeep-sqlite)
-npm test                          # unit test
+npm test                          # unit test (solo unit, Vitest)
+npm run e2e                       # test e2e Playwright (richiede i browser: npx playwright install)
 npm run lint                      # lint
 ionic build && npx cap sync android
 npx cap run android               # build e installazione su emulatore o telefono

@@ -13,10 +13,10 @@
     "eslint": "ng lint --max-warnings 0",
     "prettier": "prettier \"**/*.{ts,html}\"",
     "typecheck:e2e": "tsc -p tsconfig.e2e.json",
-    "test": "npm run test:unit && npm run test:e2e",
+    "test": "npm run test:unit",
     "test:unit": "ng test --no-watch",
     "test:unit:watch": "ng test --watch",
-    "test:e2e": "playwright test"
+    "e2e": "playwright test"
   },
   "private": true,
   "dependencies": {
