@@ -51,12 +51,25 @@ npm test                          # unit test (solo unit, Vitest)
 npm run e2e                       # test e2e Playwright (richiede i browser: npx playwright install)
 npm run lint                      # lint
 ionic build && npx cap sync android
-npx cap run android               # build e installazione su emulatore o telefono
+npx cap run android               # build e installazione su emulatore o telefono (solo da PowerShell, vedi sotto)
 ionic cap run android -l --external   # live reload (stessa rete Wi-Fi)
 adb devices                       # dispositivi collegati (emulator-5554 = emulatore)
 adb logcat | grep -i capacitor    # log dell'app (Git Bash)
 cd android && ./gradlew --stop    # ferma il daemon Gradle dopo un cambio di JDK
 ```
+
+### Installare e avviare l'app da Git Bash
+
+`npx cap run android` funziona da PowerShell ma **non da Git Bash**: Capacitor invoca `gradlew` tramite cmd e fallisce con "gradlew non è riconosciuto come comando interno o esterno". Da Git Bash (quindi anche per Claude Code) si usa la sequenza equivalente:
+
+```bash
+ionic build && npx cap sync android
+cd android && ./gradlew assembleDebug && cd ..
+adb -s emulator-5554 install -r android/app/build/outputs/apk/debug/app-debug.apk
+adb -s emulator-5554 shell am start -n dev.ouija.palanche/.MainActivity
+```
+
+`install -r` reinstalla mantenendo i dati dell'app. Per un avvio a freddo, prima `adb -s emulator-5554 shell am force-stop dev.ouija.palanche`. Con il telefono collegato, sostituisci `emulator-5554` con il suo seriale (`adb devices`).
 
 ## Architettura
 
