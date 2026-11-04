@@ -5,4 +5,6 @@ export type SettingKey =
   /** Account preselected in the new transaction form. */
   | 'last_account_id'
   /** ISO timestamp of the last JSON export. */
-  | 'last_export_at';
+  | 'last_export_at'
+  /** First day (1–28) of the accounting month; missing = 1. */
+  | 'month_start_day';

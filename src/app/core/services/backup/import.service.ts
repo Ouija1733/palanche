@@ -8,6 +8,7 @@ import { SettingsRepository } from '../../repositories/settings.repository';
 import { TagsRepository } from '../../repositories/tags.repository';
 import { TransactionsRepository } from '../../repositories/transactions.repository';
 import { DataChangesService } from '../data-changes.service';
+import { PreferencesService } from '../preferences.service';
 
 import { BackupFilesService } from './backup-files.service';
 import type { BackupFile, BackupSummary } from './backup-format';
@@ -54,6 +55,7 @@ export class ImportService {
   private readonly exporter = inject(ExportService);
   private readonly files = inject(BackupFilesService);
   private readonly changes = inject(DataChangesService);
+  private readonly preferences = inject(PreferencesService);
 
   /** Validates the file text (throws BackupError) and upgrades older versions. */
   parse(text: string): BackupFile {
@@ -83,6 +85,8 @@ export class ImportService {
       await this.writeRows(file, tx);
       await this.settings.setMany(file.settings, tx);
     });
+    // A restore may change the preferences too (e.g. the month start day).
+    await this.preferences.load();
     this.changes.notify();
   }
 
@@ -146,6 +150,8 @@ export class ImportService {
         transactionTags: transactionTags.length,
       };
     });
+    // A restore may change the preferences too (e.g. the month start day).
+    await this.preferences.load();
     this.changes.notify();
     return result;
   }

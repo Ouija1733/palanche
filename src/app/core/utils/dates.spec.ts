@@ -1,8 +1,14 @@
 import {
+  accountingMonthOf,
+  accountingPeriod,
+  accountingPeriodLength,
   addDays,
   addMonths,
+  currentAccountingMonth,
+  daysBetween,
   daysInMonth,
   isValidIsoDate,
+  isValidMonthStartDay,
   monthBounds,
   nowIso,
   parseIsoDate,
@@ -94,6 +100,102 @@ describe('dates', () => {
     it('rejects invalid months', () => {
       expect(() => addMonths('2026-13', 1)).toThrow();
       expect(() => daysInMonth('2026-1')).toThrow();
+    });
+  });
+
+  describe('daysBetween', () => {
+    it('counts calendar days, across months, years and DST changes', () => {
+      expect(daysBetween('2026-11-03', '2026-11-03')).toBe(0);
+      expect(daysBetween('2026-12-31', '2027-01-01')).toBe(1);
+      expect(daysBetween('2026-03-28', '2026-03-30')).toBe(2); // DST starts on 29 March
+      expect(daysBetween('2026-10-24', '2026-10-26')).toBe(2); // DST ends on 25 October
+      expect(daysBetween('2026-11-10', '2026-11-01')).toBe(-9);
+    });
+  });
+
+  describe('accounting periods', () => {
+    it('validates the start day', () => {
+      expect([1, 15, 16, 28].every(isValidMonthStartDay)).toBe(true);
+      expect([0, 29, 31, 1.5, Number.NaN].some(isValidMonthStartDay)).toBe(false);
+      expect(() => accountingPeriod('2026-11', 29)).toThrow();
+      expect(() => accountingMonthOf('2026-11-03', 0)).toThrow();
+    });
+
+    it('with start 1 is the calendar month', () => {
+      expect(accountingPeriod('2026-11', 1)).toEqual(monthBounds('2026-11'));
+      expect(accountingPeriod('2024-02', 1)).toEqual({ first: '2024-02-01', last: '2024-02-29' });
+      expect(accountingMonthOf('2026-11-30', 1)).toBe('2026-11');
+      expect(accountingMonthOf('2026-12-01', 1)).toBe('2026-12');
+    });
+
+    it('with a start from 2 to 15 is named after the month in which it starts', () => {
+      expect(accountingPeriod('2026-11', 10)).toEqual({ first: '2026-11-10', last: '2026-12-09' });
+      expect(accountingPeriod('2026-11', 15)).toEqual({ first: '2026-11-15', last: '2026-12-14' });
+      expect(accountingMonthOf('2026-11-09', 10)).toBe('2026-10');
+      expect(accountingMonthOf('2026-11-10', 10)).toBe('2026-11');
+      expect(accountingMonthOf('2026-12-09', 10)).toBe('2026-11');
+    });
+
+    it('with a start from 16 to 28 is named after the month in which it ends', () => {
+      expect(accountingPeriod('2026-11', 16)).toEqual({ first: '2026-10-16', last: '2026-11-15' });
+      expect(accountingPeriod('2026-11', 27)).toEqual({ first: '2026-10-27', last: '2026-11-26' });
+      expect(accountingPeriod('2026-11', 28)).toEqual({ first: '2026-10-28', last: '2026-11-27' });
+      expect(accountingMonthOf('2026-10-26', 27)).toBe('2026-10');
+      expect(accountingMonthOf('2026-10-27', 27)).toBe('2026-11');
+      expect(accountingMonthOf('2026-11-26', 27)).toBe('2026-11');
+      expect(accountingMonthOf('2026-11-27', 27)).toBe('2026-12');
+    });
+
+    it('crosses the end of the year in both directions', () => {
+      // Named by start: December runs into January.
+      expect(accountingPeriod('2026-12', 10)).toEqual({ first: '2026-12-10', last: '2027-01-09' });
+      expect(accountingMonthOf('2027-01-05', 10)).toBe('2026-12');
+      // Named by end: January starts in December.
+      expect(accountingPeriod('2027-01', 27)).toEqual({ first: '2026-12-27', last: '2027-01-26' });
+      expect(accountingMonthOf('2026-12-31', 27)).toBe('2027-01');
+      expect(accountingMonthOf('2026-12-26', 27)).toBe('2026-12');
+    });
+
+    it('handles February, leap years included', () => {
+      expect(accountingPeriod('2026-02', 28)).toEqual({ first: '2026-01-28', last: '2026-02-27' });
+      expect(accountingPeriod('2026-03', 28)).toEqual({ first: '2026-02-28', last: '2026-03-27' });
+      expect(accountingPeriod('2026-02', 15)).toEqual({ first: '2026-02-15', last: '2026-03-14' });
+      expect(accountingPeriodLength('2026-02', 15)).toBe(28);
+      expect(accountingPeriodLength('2024-02', 15)).toBe(29);
+      expect(accountingPeriodLength('2024-03', 20)).toBe(29); // 20 Feb – 19 Mar 2024
+      expect(accountingMonthOf('2024-02-29', 28)).toBe('2024-03');
+      expect(accountingMonthOf('2024-02-29', 1)).toBe('2024-02');
+    });
+
+    it('covers every day exactly once, for every start day', () => {
+      for (let startDay = 1; startDay <= 28; startDay++) {
+        let month = '2025-01';
+        let expectedFirst = accountingPeriod(month, startDay).first;
+        for (let i = 0; i < 26; i++) {
+          const { first, last } = accountingPeriod(month, startDay);
+          // Periods are contiguous: each one starts the day after the previous one ended.
+          expect(first).toBe(expectedFirst);
+          expect(accountingMonthOf(first, startDay)).toBe(month);
+          expect(accountingMonthOf(last, startDay)).toBe(month);
+          expect(accountingMonthOf(addDays(first, -1), startDay)).toBe(addMonths(month, -1));
+          expect(accountingMonthOf(addDays(last, 1), startDay)).toBe(addMonths(month, 1));
+          expectedFirst = addDays(last, 1);
+          month = addMonths(month, 1);
+        }
+      }
+    });
+
+    it('regroups the same date when the start day changes', () => {
+      const date = '2026-11-28';
+      expect(accountingMonthOf(date, 1)).toBe('2026-11');
+      expect(accountingMonthOf(date, 10)).toBe('2026-11');
+      expect(accountingMonthOf(date, 27)).toBe('2026-12');
+    });
+
+    it('finds the current accounting month', () => {
+      const now = new Date(2026, 10, 28, 9, 0); // 28 November 2026
+      expect(currentAccountingMonth(1, now)).toBe('2026-11');
+      expect(currentAccountingMonth(27, now)).toBe('2026-12');
     });
   });
 

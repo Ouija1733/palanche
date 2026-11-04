@@ -17,7 +17,8 @@ export type DomainErrorCode =
   | 'CATEGORY_TOO_DEEP'
   | 'CATEGORY_IN_USE'
   | 'CATEGORY_HAS_CHILDREN'
-  | 'CATEGORY_SAME';
+  | 'CATEGORY_SAME'
+  | 'INVALID_MONTH_START_DAY';
 
 export class DomainError extends Error {
   constructor(

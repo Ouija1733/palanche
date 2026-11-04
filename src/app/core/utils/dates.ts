@@ -93,6 +93,79 @@ export function monthBounds(month: YearMonth): { first: IsoDate; last: IsoDate }
   return { first: `${month}-01`, last: `${month}-${pad2(daysInMonth(month))}` };
 }
 
+/** Days from `from` to `to` (negative if `to` comes first). */
+export function daysBetween(from: IsoDate, to: IsoDate): number {
+  const utc = (date: IsoDate) => {
+    const d = parseIsoDate(date);
+    // UTC midnights: a DST change would otherwise make a day 23 or 25 hours long.
+    return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  };
+  return Math.round((utc(to) - utc(from)) / 86_400_000);
+}
+
+// ---------------------------------------------------------------------------
+// Accounting periods
+//
+// The accounting month can start on any day from 1 to 28 (a preference, e.g.
+// the salary day). A period is named after the calendar month that holds most
+// of its days: with a start from 1 to 15 it is the month in which it starts,
+// from 16 to 28 the month in which it ends. With start 27, "2026-11" is
+// 27 October – 26 November; with start 10 it is 10 November – 9 December.
+//
+// Every period calculation (budgets, monthly spending, comparisons, month
+// selector, filters) goes through these functions. Changing the start day
+// changes no stored data: budgets keep their "YYYY-MM" name, only the dates
+// that fall in it change.
+// ---------------------------------------------------------------------------
+
+export const MIN_MONTH_START_DAY = 1;
+/** 28 at most, so that every month has the start day (February included). */
+export const MAX_MONTH_START_DAY = 28;
+export const DEFAULT_MONTH_START_DAY = 1;
+
+/** Last start day for which a period is named after the month in which it starts. */
+const LAST_START_DAY_NAMED_BY_START = 15;
+
+export function isValidMonthStartDay(value: number): boolean {
+  return Number.isInteger(value) && value >= MIN_MONTH_START_DAY && value <= MAX_MONTH_START_DAY;
+}
+
+function assertMonthStartDay(startDay: number): void {
+  if (!isValidMonthStartDay(startDay)) {
+    throw new Error(`Invalid month start day: ${startDay}`);
+  }
+}
+
+/** First and last day (both included) of the accounting month. */
+export function accountingPeriod(month: YearMonth, startDay: number): { first: IsoDate; last: IsoDate } {
+  assertMonthStartDay(startDay);
+  const startMonth = startDay <= LAST_START_DAY_NAMED_BY_START ? month : addMonths(month, -1);
+  const first = `${startMonth}-${pad2(startDay)}`;
+  const nextFirst = `${addMonths(startMonth, 1)}-${pad2(startDay)}`;
+  return { first, last: addDays(nextFirst, -1) };
+}
+
+/** The accounting month a date belongs to: the inverse of `accountingPeriod`. */
+export function accountingMonthOf(date: IsoDate, startDay: number): YearMonth {
+  assertMonthStartDay(startDay);
+  const month = toYearMonth(date);
+  const day = Number(date.slice(8, 10));
+  // Month in which the period that contains the date started.
+  const startMonth = day >= startDay ? month : addMonths(month, -1);
+  return startDay <= LAST_START_DAY_NAMED_BY_START ? startMonth : addMonths(startMonth, 1);
+}
+
+/** Today's accounting month. */
+export function currentAccountingMonth(startDay: number, now: Date = new Date()): YearMonth {
+  return accountingMonthOf(today(now), startDay);
+}
+
+/** Number of days in the accounting month. */
+export function accountingPeriodLength(month: YearMonth, startDay: number): number {
+  const { first, last } = accountingPeriod(month, startDay);
+  return daysBetween(first, last) + 1;
+}
+
 /**
  * Current instant as an ISO 8601 timestamp (UTC), used for the technical
  * columns created_at / updated_at / deleted_at, never for accounting dates.

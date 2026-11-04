@@ -18,6 +18,7 @@ const DOMAIN_MESSAGES: Record<DomainErrorCode, string> = {
   CATEGORY_IN_USE: 'La categoria ha dei movimenti: uniscila a un’altra invece di eliminarla.',
   CATEGORY_HAS_CHILDREN: 'Elimina o sposta prima le sottocategorie.',
   CATEGORY_SAME: 'Scegli una categoria diversa.',
+  INVALID_MONTH_START_DAY: 'Il mese può iniziare in un giorno dall’1 al 28.',
 };
 
 const BACKUP_MESSAGES: Record<BackupErrorCode, string> = {

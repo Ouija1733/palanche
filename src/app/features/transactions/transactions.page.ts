@@ -18,6 +18,7 @@ import type { TransactionType } from '../../core/models/transaction-type';
 import { AccountService } from '../../core/services/account.service';
 import { CategoryService } from '../../core/services/category.service';
 import { DataChangesService } from '../../core/services/data-changes.service';
+import { PreferencesService } from '../../core/services/preferences.service';
 import { TransactionService } from '../../core/services/transaction.service';
 import { formatSignedCents } from '../../core/utils/money';
 import type { ChoiceOption } from '../../shared/choice.service';
@@ -73,6 +74,7 @@ export class TransactionsPage {
   private readonly accountService = inject(AccountService);
   private readonly categoryService = inject(CategoryService);
   private readonly changes = inject(DataChangesService);
+  private readonly preferences = inject(PreferencesService);
   private readonly choices = inject(ChoiceService);
   private readonly toast = inject(ToastService);
   protected readonly editor = inject(TransactionEditorService);
@@ -139,7 +141,7 @@ export class TransactionsPage {
   );
 
   private readonly filter = computed<TransactionFilter>(() => ({
-    ...periodRange(this.period()),
+    ...periodRange(this.period(), this.preferences.monthStartDay()),
     accountIds: this.accountIds(),
     categoryIds: this.categoryIds(),
     types: this.types(),
