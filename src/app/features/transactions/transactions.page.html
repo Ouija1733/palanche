@@ -1,0 +1,70 @@
+<ion-content class="pal-page with-fab">
+  <app-page-header title="Movimenti" />
+
+  <label class="search">
+    <ion-icon name="search-outline" aria-hidden="true" />
+    <input
+      type="search"
+      placeholder="Cerca per nota o beneficiario"
+      enterkeyhint="search"
+      [value]="searchDraft()"
+      (input)="onSearch($any($event.target).value)"
+    />
+    @if (searchDraft()) {
+    <button type="button" class="clear" aria-label="Cancella la ricerca" (click)="clearSearch()">
+      <ion-icon name="close-outline" aria-hidden="true" />
+    </button>
+    }
+  </label>
+
+  <div class="pal-chips filters">
+    <app-filter-chip [active]="period() !== 'all'" (click)="choosePeriod()">{{ periodLabel() }}</app-filter-chip>
+    <app-filter-chip [active]="accountIds().length > 0" (click)="chooseAccounts()"
+      >{{ accountsLabel() }}</app-filter-chip
+    >
+    <app-filter-chip [active]="categoryIds().length > 0" (click)="chooseCategories()">
+      {{ categoriesLabel() }}
+    </app-filter-chip>
+    <app-filter-chip [active]="types().length > 0" (click)="chooseTypes()">{{ typesLabel() }}</app-filter-chip>
+    @if (tags().length > 0) {
+    <app-filter-chip [active]="tagIds().length > 0" (click)="chooseTags()">{{ tagsLabel() }}</app-filter-chip>
+    }
+  </div>
+
+  @for (group of groups(); track group.date) {
+  <div class="day-head">
+    <span>{{ group.heading }}</span>
+    <span>{{ group.total }}</span>
+  </div>
+  <ion-list class="day" lines="none">
+    @for (item of group.items; track item.id) {
+    <ion-item-sliding #sliding>
+      <ion-item button [detail]="false" (click)="editor.open(item.id)">
+        <app-transaction-row [item]="item" />
+      </ion-item>
+      <ion-item-options side="end" (ionSwipe)="remove(item, sliding)">
+        <ion-item-option class="delete" expandable (click)="remove(item, sliding)">
+          <ion-icon slot="top" name="trash-outline" aria-hidden="true" />
+          Elimina
+        </ion-item-option>
+      </ion-item-options>
+    </ion-item-sliding>
+    }
+  </ion-list>
+  } @empty { @if (loaded()) {
+  <div class="pal-card pal-empty">
+    <strong>Nessun movimento</strong>
+    {{ emptyHint() }}
+  </div>
+  } }
+
+  <ion-infinite-scroll [disabled]="allLoaded()" (ionInfinite)="loadMore($event)">
+    <ion-infinite-scroll-content />
+  </ion-infinite-scroll>
+
+  <app-add-transaction-fab slot="fixed" />
+</ion-content>
+
+<ion-footer class="ion-no-border" data-toast-anchor>
+  <app-summary-bar [count]="count()" [netCents]="netCents()" />
+</ion-footer>

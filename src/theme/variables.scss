@@ -24,6 +24,8 @@
   --pal-warning: #d97706;
   --pal-warning-text: #b45309;
   --pal-danger: #b91c1c;
+  // Filled danger buttons (swipe "Elimina"): white text, same in both themes.
+  --pal-danger-fill: #b91c1c;
 
   // Category colors, by palette key (the value stored in categories.color).
   // Used for the category icon; its soft background is mixed from the same

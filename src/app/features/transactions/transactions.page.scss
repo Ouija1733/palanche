@@ -1,0 +1,97 @@
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 6px 0 16px;
+  border: 1px solid var(--pal-border);
+  border-radius: var(--pal-radius-card);
+  background: var(--pal-surface);
+  color: var(--pal-text-muted);
+}
+
+.search > ion-icon {
+  flex: none;
+  font-size: 22px;
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  border: 0;
+  background: none;
+  color: var(--pal-text);
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+}
+
+// Hide the browser's own clear button: there is ours.
+.search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.clear {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--pal-text-muted);
+  font-size: 22px;
+}
+
+.filters {
+  // Full-bleed row: it scrolls under the page margins.
+  margin: 12px calc(-1 * var(--pal-page-padding)) 4px;
+  padding: 0 var(--pal-page-padding);
+}
+
+.day-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 4px 8px;
+  font-size: var(--pal-fs-secondary);
+  font-weight: var(--pal-font-bold);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--pal-text-muted);
+}
+
+.day {
+  padding: 0;
+  border-radius: var(--pal-radius-card);
+  background: var(--pal-surface);
+  overflow: hidden;
+}
+
+.day ion-item {
+  --background: var(--pal-surface);
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+  --min-height: 64px;
+}
+
+.day ion-item-sliding + ion-item-sliding {
+  border-top: 1px solid var(--pal-border);
+}
+
+app-transaction-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.delete {
+  --background: var(--pal-danger-fill);
+  --color: #ffffff;
+  min-width: 96px;
+  font-weight: var(--pal-font-bold);
+  text-transform: none;
+}
+
+.delete ion-icon {
+  font-size: 22px;
+}

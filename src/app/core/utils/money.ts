@@ -63,6 +63,18 @@ export function formatTransactionAmount(cents: number, type: TransactionType): s
   }
 }
 
+/**
+ * Formats a net amount (income − expenses) with an explicit sign, as in the
+ * day totals and the summary bar: "+ € 1.954,00", "− € 38,20", "€ 0,00".
+ */
+export function formatSignedCents(cents: number): string {
+  assertCents(cents);
+  if (cents === 0) {
+    return formatAbsolute(0);
+  }
+  return `${cents > 0 ? '+' : MINUS_SIGN}${NBSP}${formatAbsolute(cents)}`;
+}
+
 // Either plain digits ("1234") or digits grouped by dots ("1.234"),
 // optionally followed by a comma and up to two decimals.
 const AMOUNT_PATTERN = /^(\d+|\d{1,3}(?:\.\d{3})+)(?:,(\d{0,2}))?$/;

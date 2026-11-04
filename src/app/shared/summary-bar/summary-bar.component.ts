@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 
-import { formatCents } from '../../core/utils/money';
+import { formatSignedCents } from '../../core/utils/money';
 
 /** "24 movimenti filtrati · Saldo: + € 1.341,60", shown above the tab bar. */
 @Component({
@@ -36,8 +36,5 @@ export class SummaryBarComponent {
   protected readonly countLabel = computed(() =>
     this.count() === 1 ? '1 movimento filtrato' : `${this.count()} movimenti filtrati`,
   );
-  protected readonly netLabel = computed(() => {
-    const net = this.netCents();
-    return net > 0 ? `+\u00A0${formatCents(net)}` : formatCents(net);
-  });
+  protected readonly netLabel = computed(() => formatSignedCents(this.netCents()));
 }

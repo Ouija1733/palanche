@@ -26,21 +26,26 @@ export class ToastService {
     await this.show({
       message,
       duration: UNDO_DURATION_MS,
-      buttons: [{ text: 'Annulla', role: 'cancel', handler: () => void onUndo() }],
+      // No 'cancel' role: Ionic would paint it with a theme gray, unreadable in dark mode.
+      buttons: [{ text: 'Annulla', handler: () => void onUndo() }],
     });
   }
 
   /**
    * Inside a bottom sheet the toast goes on top, so it never covers the Save
-   * buttons; otherwise it sits just above the tab bar.
+   * buttons. Otherwise it sits just above the visible element marked with
+   * `data-toast-anchor` (the summary bar of Movimenti), or above the tab bar.
    */
-  private placement(): { position: 'top' | 'bottom'; positionAnchor?: string } {
+  private placement(): { position: 'top' | 'bottom'; positionAnchor?: HTMLElement } {
     if (document.querySelector('ion-modal.pal-sheet')) {
       return { position: 'top' };
     }
-    return document.getElementById(TAB_BAR_ID)
-      ? { position: 'bottom', positionAnchor: TAB_BAR_ID }
-      : { position: 'bottom' };
+    // Tab pages stay in the DOM when hidden: pick the anchor that is on screen.
+    const anchor = [...document.querySelectorAll<HTMLElement>('[data-toast-anchor]')].find(
+      (element) => element.getClientRects().length > 0 && !element.closest('.ion-page-hidden'),
+    );
+    const positionAnchor = anchor ?? document.getElementById(TAB_BAR_ID) ?? undefined;
+    return { position: 'bottom', positionAnchor };
   }
 
   private async show(options: Parameters<ToastController['create']>[0]): Promise<void> {

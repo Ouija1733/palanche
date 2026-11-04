@@ -1,4 +1,4 @@
-import { formatCents, formatTransactionAmount, parseAmountToCents } from './money';
+import { formatCents, formatSignedCents, formatTransactionAmount, parseAmountToCents } from './money';
 
 // Expected strings use a non-breaking space (U+00A0) and the minus sign (U+2212).
 const S = ' ';
@@ -49,6 +49,14 @@ describe('money', () => {
 
     it('rejects negative amounts', () => {
       expect(() => formatTransactionAmount(-100, 'expense')).toThrow(RangeError);
+    });
+  });
+
+  describe('formatSignedCents', () => {
+    it('shows the sign of a net amount', () => {
+      expect(formatSignedCents(195400)).toBe(`+${S}€${S}1.954,00`);
+      expect(formatSignedCents(-3820)).toBe(`${M}${S}€${S}38,20`);
+      expect(formatSignedCents(0)).toBe(`€${S}0,00`);
     });
   });
 
