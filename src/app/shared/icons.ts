@@ -67,6 +67,15 @@ import {
   umbrellaOutline,
   walletOutline,
   waterOutline,
+  archiveOutline,
+  createOutline,
+  downloadOutline,
+  gitMergeOutline,
+  returnDownForwardOutline,
+  shareOutline,
+  shieldCheckmarkOutline,
+  arrowUpOutline,
+  folderOpenOutline,
   wifiOutline,
 } from 'ionicons/icons';
 
@@ -146,6 +155,15 @@ export const APP_ICONS: Record<string, string> = {
   'settings-outline': settingsOutline,
   'swap-horizontal-outline': swapHorizontalOutline,
   'trash-outline': trashOutline,
+  'folder-open-outline': folderOpenOutline,
+  'arrow-up-outline': arrowUpOutline,
+  'shield-checkmark-outline': shieldCheckmarkOutline,
+  'share-outline': shareOutline,
+  'return-down-forward-outline': returnDownForwardOutline,
+  'git-merge-outline': gitMergeOutline,
+  'download-outline': downloadOutline,
+  'create-outline': createOutline,
+  'archive-outline': archiveOutline,
 };
 
 /** Makes the icons available to <ion-icon name="…">. Called once at startup. */

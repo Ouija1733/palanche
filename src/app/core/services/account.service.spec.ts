@@ -6,6 +6,7 @@ import { CategoriesRepository } from '../repositories/categories.repository';
 import { TransactionsRepository } from '../repositories/transactions.repository';
 
 import { AccountService } from './account.service';
+import { DataChangesService } from './data-changes.service';
 
 describe('AccountService', () => {
   let service: AccountService;
@@ -65,5 +66,15 @@ describe('AccountService', () => {
 
     await expect(service.delete(account.id)).rejects.toMatchObject({ code: 'ACCOUNT_HAS_TRANSACTIONS' });
     expect((await service.setArchived(account.id, true)).archived).toBe(true);
+  });
+
+  it('tells the pages that the data changed after every write', async () => {
+    const changes = TestBed.inject(DataChangesService);
+    const before = changes.version();
+    const account = await service.create({ name: 'Contanti', type: 'cash' });
+    await service.update(account.id, { name: 'Portafoglio' });
+    await service.setArchived(account.id, true);
+    await service.reorder([account.id]);
+    expect(changes.version()).toBe(before + 4);
   });
 });

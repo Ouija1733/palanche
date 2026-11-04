@@ -8,6 +8,7 @@ import { CategoriesRepository } from '../repositories/categories.repository';
 import { TransactionsRepository } from '../repositories/transactions.repository';
 
 import { CategoryService } from './category.service';
+import { DataChangesService } from './data-changes.service';
 
 describe('CategoryService', () => {
   let service: CategoryService;
@@ -173,5 +174,14 @@ describe('CategoryService', () => {
     it('works without any transaction', async () => {
       expect((await service.getMostUsed('expense', 7, now)).map((c) => c.name)).toEqual(['Casa', 'Spesa']);
     });
+  });
+
+  it('tells the pages that the data changed after every write', async () => {
+    const changes = TestBed.inject(DataChangesService);
+    const before = changes.version();
+    await service.update(home.id, { name: 'Abitazione' });
+    await service.delete(food.id);
+    await service.restore(food.id);
+    expect(changes.version()).toBe(before + 3);
   });
 });

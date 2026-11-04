@@ -16,3 +16,11 @@ export const TRANSACTION_TYPE_LABELS: Readonly<Record<TransactionType, string>> 
   income: 'Entrata',
   transfer: 'Trasferimento',
 };
+
+/** Icon of each account type (Ionicons, -outline). */
+export const ACCOUNT_TYPE_ICONS: Readonly<Record<AccountType, string>> = {
+  checking: 'wallet-outline',
+  cash: 'cash-outline',
+  card: 'card-outline',
+  savings: 'trending-up-outline',
+};

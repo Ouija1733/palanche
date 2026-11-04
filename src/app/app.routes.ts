@@ -29,7 +29,21 @@ export const routes: Routes = [
   {
     path: 'settings',
     canActivate: [onboardingDoneGuard],
-    loadComponent: () => import('./features/settings/settings.page').then((m) => m.SettingsPage),
+    children: [
+      { path: '', loadComponent: () => import('./features/settings/settings.page').then((m) => m.SettingsPage) },
+      {
+        path: 'accounts',
+        loadComponent: () => import('./features/settings/accounts/accounts.page').then((m) => m.AccountsPage),
+      },
+      {
+        path: 'categories',
+        loadComponent: () => import('./features/settings/categories/categories.page').then((m) => m.CategoriesPage),
+      },
+      {
+        path: 'backup',
+        loadComponent: () => import('./features/settings/backup/backup.page').then((m) => m.BackupPage),
+      },
+    ],
   },
   { path: '', redirectTo: 'tabs/home', pathMatch: 'full' },
   { path: '**', redirectTo: 'tabs/home' },

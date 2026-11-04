@@ -61,6 +61,91 @@ app-balance-card + .pal-card {
   margin-top: var(--pal-card-gap);
 }
 
+// Header of the pages opened from Settings: back arrow and a bold title.
+ion-header.pal-header ion-toolbar {
+  --background: var(--pal-bg);
+  --min-height: 56px;
+}
+
+ion-header.pal-header ion-title {
+  padding-inline-start: 4px;
+  font-size: 20px;
+  font-weight: var(--pal-font-extrabold);
+}
+
+// A card holding a list of tappable rows (settings, accounts, categories).
+.pal-list {
+  padding: 4px 0;
+  border-radius: var(--pal-radius-card);
+  background: var(--pal-surface);
+  overflow: hidden;
+}
+
+.pal-list + .pal-list,
+.pal-list + .pal-button,
+.pal-button + .pal-list {
+  margin-top: var(--pal-card-gap);
+}
+
+.pal-list ion-item {
+  --background: var(--pal-surface);
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+  --min-height: 60px;
+  font-size: 15px;
+  font-weight: var(--pal-font-semibold);
+}
+
+.pal-list ion-item + ion-item,
+.pal-list .pal-list-row + .pal-list-row {
+  border-top: 1px solid var(--pal-border);
+}
+
+.pal-list-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 16px;
+  border: 0;
+  background: none;
+  color: var(--pal-text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: var(--pal-font-semibold);
+  text-align: start;
+  text-decoration: none;
+}
+
+.pal-list-row > .grow,
+.pal-list ion-item .grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.pal-list .sub {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--pal-fs-secondary);
+  font-weight: var(--pal-font-regular);
+  color: var(--pal-text-muted);
+}
+
+.pal-list .chevron {
+  flex: none;
+  font-size: 20px;
+  color: var(--pal-text-muted);
+}
+
+.pal-group-title {
+  margin: 22px 4px 8px;
+}
+
+.pal-button.wide {
+  width: 100%;
+}
+
 .pal-section-title {
   margin: 0;
   font-size: var(--pal-fs-section-title);
@@ -275,6 +360,16 @@ ion-action-sheet.pal-action-sheet {
   --background: var(--pal-surface);
   --color: var(--pal-text);
   font-family: var(--pal-font-family);
+}
+
+ion-action-sheet.pal-action-sheet .action-sheet-title {
+  color: var(--pal-text-muted);
+  font-size: var(--pal-fs-secondary);
+  font-weight: var(--pal-font-bold);
+}
+
+ion-action-sheet.pal-action-sheet .action-sheet-destructive {
+  color: var(--pal-danger);
 }
 
 ion-action-sheet.pal-action-sheet .selected {

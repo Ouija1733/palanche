@@ -40,11 +40,15 @@ export class ToastService {
     if (document.querySelector('ion-modal.pal-sheet')) {
       return { position: 'top' };
     }
-    // Tab pages stay in the DOM when hidden: pick the anchor that is on screen.
-    const anchor = [...document.querySelectorAll<HTMLElement>('[data-toast-anchor]')].find(
+    // Pages stay in the DOM when hidden (other tabs, the tabs under Settings):
+    // use only an anchor that is on screen, else the bottom of the screen.
+    const candidates = [
+      ...document.querySelectorAll<HTMLElement>('[data-toast-anchor]'),
+      ...document.querySelectorAll<HTMLElement>(`#${TAB_BAR_ID}`),
+    ];
+    const positionAnchor = candidates.find(
       (element) => element.getClientRects().length > 0 && !element.closest('.ion-page-hidden'),
     );
-    const positionAnchor = anchor ?? document.getElementById(TAB_BAR_ID) ?? undefined;
     return { position: 'bottom', positionAnchor };
   }
 

@@ -7,6 +7,7 @@ import { CategoriesRepository } from '../repositories/categories.repository';
 import { TransactionsRepository } from '../repositories/transactions.repository';
 import { addDays, today } from '../utils/dates';
 
+import { DataChangesService } from './data-changes.service';
 import { DomainError } from './domain-error';
 
 /** A main category with its subcategories. */
@@ -45,6 +46,7 @@ export class CategoryService {
   private readonly database = inject(DatabaseService);
   private readonly categories = inject(CategoriesRepository);
   private readonly transactions = inject(TransactionsRepository);
+  private readonly changes = inject(DataChangesService);
 
   /** All active categories of a kind (main and sub), in display order. */
   async list(kind: CategoryKind): Promise<Category[]> {
@@ -61,7 +63,7 @@ export class CategoryService {
 
   async create(input: CategoryInput): Promise<Category> {
     const name = cleanName(input.name);
-    return this.database.db.transaction(async (tx) => {
+    const created = await this.database.db.transaction(async (tx) => {
       if (!input.parentId) {
         return this.categories.create({ name, kind: input.kind, icon: input.icon, color: input.color }, tx);
       }
@@ -72,6 +74,8 @@ export class CategoryService {
         tx,
       );
     });
+    this.changes.notify();
+    return created;
   }
 
   /**
@@ -80,7 +84,7 @@ export class CategoryService {
    */
   async update(id: string, changes: { name?: string; icon?: string; color?: CategoryColor }): Promise<Category> {
     const name = changes.name === undefined ? undefined : cleanName(changes.name);
-    return this.database.db.transaction(async (tx) => {
+    const result = await this.database.db.transaction(async (tx) => {
       const category = await this.requireCategory(id, tx);
       if (category.parentId) {
         return this.categories.update(id, { name }, tx);
@@ -89,6 +93,8 @@ export class CategoryService {
       await this.categories.setChildrenAppearance(id, { icon: updated.icon, color: updated.color }, tx);
       return updated;
     });
+    this.changes.notify();
+    return result;
   }
 
   /**
@@ -113,6 +119,7 @@ export class CategoryService {
       await this.categories.setParent(id, parent.id, tx);
       await this.categories.update(id, { icon: parent.icon, color: parent.color }, tx);
     });
+    this.changes.notify();
   }
 
   /**
@@ -145,6 +152,7 @@ export class CategoryService {
       }
       await this.categories.softDelete(sourceId, tx);
     });
+    this.changes.notify();
   }
 
   /** Deletes an unused category without subcategories; otherwise propose a merge. */
@@ -157,10 +165,12 @@ export class CategoryService {
       throw new DomainError('CATEGORY_IN_USE', 'A category with transactions can only be merged');
     }
     await this.categories.softDelete(id);
+    this.changes.notify();
   }
 
   async restore(id: string): Promise<void> {
     await this.categories.restore(id);
+    this.changes.notify();
   }
 
   /**

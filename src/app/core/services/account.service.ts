@@ -5,6 +5,7 @@ import type { Account, AccountChanges, NewAccount } from '../models/account';
 import { AccountsRepository } from '../repositories/accounts.repository';
 import { TransactionsRepository } from '../repositories/transactions.repository';
 
+import { DataChangesService } from './data-changes.service';
 import { DomainError } from './domain-error';
 
 function cleanName(name: string): string {
@@ -26,6 +27,7 @@ export class AccountService {
   private readonly database = inject(DatabaseService);
   private readonly accounts = inject(AccountsRepository);
   private readonly transactions = inject(TransactionsRepository);
+  private readonly changes = inject(DataChangesService);
 
   /** Accounts in display order; archived ones only if requested. */
   async list(options: { includeArchived?: boolean } = {}): Promise<Account[]> {
@@ -36,21 +38,27 @@ export class AccountService {
   async create(input: NewAccount): Promise<Account> {
     assertInitialBalance(input.initialBalanceCents);
     const name = cleanName(input.name);
-    return this.database.db.transaction(async (tx) => {
+    const account = await this.database.db.transaction(async (tx) => {
       const existing = await this.accounts.findAll({ includeArchived: true }, tx);
       const sortOrder = existing.reduce((max, account) => Math.max(max, account.sortOrder + 1), 0);
       return this.accounts.create({ ...input, name, sortOrder }, tx);
     });
+    this.changes.notify();
+    return account;
   }
 
   async update(id: string, changes: AccountChanges): Promise<Account> {
     assertInitialBalance(changes.initialBalanceCents);
     const name = changes.name === undefined ? undefined : cleanName(changes.name);
-    return this.accounts.update(id, { ...changes, name });
+    const account = await this.accounts.update(id, { ...changes, name });
+    this.changes.notify();
+    return account;
   }
 
   async setArchived(id: string, archived: boolean): Promise<Account> {
-    return this.accounts.update(id, { archived });
+    const account = await this.accounts.update(id, { archived });
+    this.changes.notify();
+    return account;
   }
 
   /**
@@ -64,10 +72,12 @@ export class AccountService {
     if (!(await this.accounts.softDelete(id))) {
       throw new DomainError('ACCOUNT_NOT_FOUND', `Account not found: ${id}`);
     }
+    this.changes.notify();
   }
 
   async restore(id: string): Promise<void> {
     await this.accounts.restore(id);
+    this.changes.notify();
   }
 
   /** Saves the display order: `ids` from first to last. */
@@ -77,5 +87,6 @@ export class AccountService {
         await this.accounts.update(id, { sortOrder: index }, tx);
       }
     });
+    this.changes.notify();
   }
 }
