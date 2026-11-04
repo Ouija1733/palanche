@@ -213,6 +213,36 @@ describe('TransactionsRepository', () => {
     });
   });
 
+  describe('expenseByCategory', () => {
+    it('sums the active expenses of each category in the period, without rolling up', async () => {
+      await expense(1000, '2026-11-01');
+      await expense(500, '2026-11-30');
+      await expense(9999, '2026-10-31'); // before the period
+      await expense(9999, '2026-12-01'); // after the period
+      await expense(70000, '2026-11-05', { categoryId: rent.id });
+      await expense(3000, '2026-11-06', { categoryId: home.id });
+      const deleted = await expense(9999, '2026-11-10');
+      await transactions.softDelete(deleted.id);
+      await transactions.create({
+        type: 'income',
+        amountCents: 9999,
+        accountId: checking.id,
+        categoryId: salary.id,
+        date: '2026-11-10',
+      });
+      await transactions.create({
+        type: 'transfer',
+        amountCents: 9999,
+        accountId: checking.id,
+        toAccountId: cash.id,
+        date: '2026-11-10',
+      });
+
+      const totals = await transactions.expenseByCategory('2026-11-01', '2026-11-30');
+      expect(Object.fromEntries(totals)).toEqual({ [groceries.id]: 1500, [rent.id]: 70000, [home.id]: 3000 });
+    });
+  });
+
   describe('aggregates', () => {
     beforeEach(async () => {
       await expense(3820, '2026-11-15');

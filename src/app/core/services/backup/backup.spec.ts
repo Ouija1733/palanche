@@ -145,7 +145,7 @@ describe('backup export / import', () => {
       expect(file).toEqual(
         expect.objectContaining({
           app: 'palanche',
-          schemaVersion: 1,
+          schemaVersion: 2,
           exportedAt: '2026-11-15T18:00:00.000Z',
           budgets: [],
           savingsGoals: [],
@@ -215,7 +215,7 @@ describe('backup export / import', () => {
       const summary = importer.summarize(await exporter.build(NOW));
       expect(summary).toEqual({
         exportedAt: '2026-11-15T18:00:00.000Z',
-        schemaVersion: 1,
+        schemaVersion: 2,
         accounts: 3,
         categories: 4,
         transactions: 4,

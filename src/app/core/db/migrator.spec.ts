@@ -1,6 +1,7 @@
 import { createTestExecutor } from '../../../testing/sqljs-executor';
 
 import type { Migration } from './migrations';
+import { MIGRATIONS } from './migrations';
 import { getSchemaVersion, migrate } from './migrator';
 import type { SqlExecutor } from './sql-executor';
 
@@ -25,23 +26,33 @@ describe('migrate', () => {
     db = await createTestExecutor();
   });
 
-  it('creates all the phase 1 tables on an empty database', async () => {
-    expect(await migrate(db)).toEqual([1]);
+  it('creates all the tables on an empty database', async () => {
+    expect(await migrate(db)).toEqual([1, 2]);
     expect(await tableNames(db)).toEqual([
       'accounts',
+      'budgets',
       'categories',
+      'savings_goals',
       'schema_migrations',
       'settings',
       'tags',
       'transaction_tags',
       'transactions',
     ]);
-    expect(await getSchemaVersion(db)).toBe(1);
+    expect(await getSchemaVersion(db)).toBe(2);
   });
 
   it('adds id and timestamp columns to every entity table', async () => {
     await migrate(db);
-    for (const table of ['accounts', 'categories', 'transactions', 'tags', 'transaction_tags']) {
+    for (const table of [
+      'accounts',
+      'categories',
+      'transactions',
+      'tags',
+      'transaction_tags',
+      'budgets',
+      'savings_goals',
+    ]) {
       expect(await columnNames(db, table)).toEqual(
         expect.arrayContaining(['id', 'created_at', 'updated_at', 'deleted_at']),
       );
@@ -52,7 +63,7 @@ describe('migrate', () => {
     await migrate(db);
     expect(await migrate(db)).toEqual([]);
     const rows = await db.query('SELECT * FROM schema_migrations');
-    expect(rows).toHaveLength(1);
+    expect(rows).toHaveLength(MIGRATIONS.length);
   });
 
   it('applies only the pending migrations and records them', async () => {
@@ -140,5 +151,85 @@ describe('migration 001 constraints', () => {
     await db.run(`UPDATE tags SET deleted_at = ? WHERE id = 't1'`, [NOW]);
     await db.run(`INSERT INTO tags (id, name, created_at, updated_at) VALUES ('t2', 'vacanze', ?, ?)`, ts);
     expect(await db.query('SELECT id FROM tags WHERE deleted_at IS NULL')).toEqual([{ id: 't2' }]);
+  });
+});
+
+describe('migration 002: budgets and savings goals', () => {
+  let db: SqlExecutor;
+  const ts = [NOW, NOW];
+
+  beforeEach(async () => {
+    db = await createTestExecutor();
+    await migrate(db, MIGRATIONS.slice(0, 1));
+    // A version 1 database with data, as on the phone before the update.
+    await db.run(
+      `INSERT INTO accounts (id, name, type, created_at, updated_at) VALUES ('a1', 'Risparmi', 'savings', ?, ?)`,
+      ts,
+    );
+    await db.run(
+      `INSERT INTO categories (id, name, kind, icon, color, created_at, updated_at)
+       VALUES ('c1', 'Svago', 'expense', 'film-outline', 'pink', ?, ?)`,
+      ts,
+    );
+    await db.run(
+      `INSERT INTO transactions (id, type, amount_cents, account_id, category_id, date, created_at, updated_at)
+       VALUES ('t1', 'expense', 1200, 'a1', 'c1', '2026-11-03', ?, ?)`,
+      ts,
+    );
+    expect(await migrate(db)).toEqual([2]);
+  });
+
+  const insertBudget = (id: string, categoryId: string | null, month = '2026-11', amount = 10000) =>
+    db.run(
+      `INSERT INTO budgets (id, category_id, month, amount_cents, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, categoryId, month, amount, ...ts],
+    );
+
+  it('keeps the existing data', async () => {
+    expect(await db.query('SELECT id FROM transactions')).toEqual([{ id: 't1' }]);
+    expect(await getSchemaVersion(db)).toBe(2);
+  });
+
+  it('allows one active budget per category and month, and one total', async () => {
+    await insertBudget('b1', 'c1');
+    await insertBudget('b2', null);
+    await insertBudget('b3', 'c1', '2026-12');
+    await expect(insertBudget('b4', 'c1')).rejects.toThrow();
+    await expect(insertBudget('b5', null)).rejects.toThrow();
+
+    // Once deleted, the slot can be used again.
+    await db.run(`UPDATE budgets SET deleted_at = ? WHERE id = 'b1'`, [NOW]);
+    await insertBudget('b4', 'c1');
+    expect(await db.query('SELECT id FROM budgets WHERE deleted_at IS NULL ORDER BY id')).toHaveLength(3);
+  });
+
+  it.each([
+    ['a zero amount', () => insertBudget('x', 'c1', '2026-11', 0)],
+    ['a decimal amount', () => insertBudget('x', 'c1', '2026-11', 10.5)],
+    ['a month with a day', () => insertBudget('x', 'c1', '2026-11-01')],
+    ['a missing category', () => insertBudget('x', 'nope')],
+  ])('rejects a budget with %s', async (_label, insert) => {
+    await expect(insert()).rejects.toThrow();
+  });
+
+  const insertGoal = (targetCents: number, targetDate: string | null, accountId = 'a1') =>
+    db.run(
+      `INSERT INTO savings_goals (id, name, target_cents, target_date, account_id, created_at, updated_at)
+       VALUES (?, 'Vacanze', ?, ?, ?, ?, ?)`,
+      [crypto.randomUUID(), targetCents, targetDate, accountId, ...ts],
+    );
+
+  it('accepts goals with or without a date', async () => {
+    await insertGoal(300000, '2027-06-30');
+    await insertGoal(100000, null);
+    expect(await db.query('SELECT id FROM savings_goals')).toHaveLength(2);
+  });
+
+  it.each([
+    ['a zero target', () => insertGoal(0, null)],
+    ['a date with a time', () => insertGoal(1000, '2027-06-30T10:00')],
+    ['a missing account', () => insertGoal(1000, null, 'nope')],
+  ])('rejects a goal with %s', async (_label, insert) => {
+    await expect(insert()).rejects.toThrow();
   });
 });

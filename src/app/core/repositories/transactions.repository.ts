@@ -241,6 +241,25 @@ export class TransactionsRepository {
     return new Map(rows.map((row) => [row.date, row.net_cents]));
   }
 
+  /**
+   * Total of the active expenses per category between two dates (both
+   * included). Each category counts only its own transactions: rolling
+   * subcategories up into their parent is done by the budget service.
+   */
+  async expenseByCategory(
+    from: IsoDate,
+    to: IsoDate,
+    db: SqlExecutor = this.database.db,
+  ): Promise<Map<string, number>> {
+    const rows = await db.query<{ category_id: string; total: number }>(
+      `SELECT category_id, SUM(amount_cents) AS total FROM transactions
+       WHERE deleted_at IS NULL AND type = 'expense' AND category_id IS NOT NULL AND date BETWEEN ? AND ?
+       GROUP BY category_id`,
+      [from, to],
+    );
+    return new Map(rows.map((row) => [row.category_id, row.total]));
+  }
+
   /** Totals of the active transactions per account, by direction, for balances. */
   async movementsByAccount(db: SqlExecutor = this.database.db): Promise<Map<string, AccountMovements>> {
     const result = new Map<string, AccountMovements>();
