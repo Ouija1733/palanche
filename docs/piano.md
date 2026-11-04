@@ -280,10 +280,12 @@ Chiusa il 3 novembre 2026 con la verifica sull'emulatore (browser ed emulatore: 
 
 Onboarding, conti, categorie predefinite, nuovo movimento, lista movimenti, export e import JSON.
 
-- [ ] Una spesa si registra in 3 tocchi dalla home
-- [ ] I saldi dei conti tornano con i movimenti inseriti
-- [ ] Export, disinstallazione, reinstallazione, import: tutti i dati identici
-- [ ] Una cancellazione si può annullare dal toast
+- [x] Una spesa si registra in 3 tocchi dalla home
+- [x] I saldi dei conti tornano con i movimenti inseriti
+- [x] Export, disinstallazione, reinstallazione, import: tutti i dati identici
+- [x] Una cancellazione si può annullare dal toast
+
+Chiusa il 4 novembre 2026. Tutti i criteri sono verificati sia sull'emulatore (Medium Phone API 37, tema chiaro e scuro, navigazione a gesti e a tre pulsanti) sia sul telefono fisico, nell'uso reale. La prova sul telefono chiude anche quella rimandata dalla fase 0. Il piano dettagliato, con i task T1–T17, è in `docs/fase-1.md`.
 
 ### Fase 2 — Controllo
 

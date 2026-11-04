@@ -196,8 +196,8 @@ Selettore del mese, card saldo, barra di avanzamento budget, riga movimento, ico
 
 ## Stato delle fasi
 
-- [x] Fase 0 — Setup (chiusa con la verifica sull'emulatore; la prova sul telefono fisico si fa alla fine della fase 1)
-- [ ] Fase 1 — MVP: registrare e salvare
+- [x] Fase 0 — Setup (chiusa con la verifica sull'emulatore; la prova sul telefono fisico è stata fatta alla chiusura della fase 1)
+- [x] Fase 1 — MVP: registrare e salvare (chiusa il 4 novembre 2026: criteri verificati sull'emulatore e sul telefono fisico; piano in `docs/fase-1.md`)
 - [ ] Fase 2 — Controllo
 - [ ] Fase 3 — Automazione
 - [ ] Fase 4 — Analisi e sicurezza
