@@ -2,7 +2,15 @@ import type { OnInit } from '@angular/core';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import type { DatetimeChangeEventDetail } from '@ionic/angular';
-import { ActionSheetController, IonContent, IonDatetime, IonIcon, IonModal, ModalController } from '@ionic/angular';
+import {
+  ActionSheetController,
+  IonContent,
+  IonDatetime,
+  IonFooter,
+  IonIcon,
+  IonModal,
+  ModalController,
+} from '@ionic/angular';
 
 import type { Account } from '../../../core/models/account';
 import type { Category, CategoryKind } from '../../../core/models/category';
@@ -38,7 +46,7 @@ const shortDate = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'sho
  */
 @Component({
   selector: 'app-transaction-editor',
-  imports: [IonContent, IonIcon, IonModal, IonDatetime, AmountKeypadComponent, CategoryGridComponent],
+  imports: [IonContent, IonFooter, IonIcon, IonModal, IonDatetime, AmountKeypadComponent, CategoryGridComponent],
   templateUrl: './transaction-editor.component.html',
   styleUrl: './transaction-editor.component.scss',
 })

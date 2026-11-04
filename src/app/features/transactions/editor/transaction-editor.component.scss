@@ -3,7 +3,15 @@
   --padding-start: var(--pal-page-padding);
   --padding-end: var(--pal-page-padding);
   --padding-top: 16px;
-  --padding-bottom: calc(16px + var(--ion-safe-area-bottom, 0px));
+  --padding-bottom: 8px;
+}
+
+// Keypad and Save buttons stay visible at the bottom, above the navigation
+// bar; only the part above them scrolls when the screen is short.
+.editor-footer {
+  padding: 6px var(--pal-page-padding) calc(12px + var(--ion-safe-area-bottom, 0px));
+  background: var(--pal-surface);
+  box-shadow: none;
 }
 
 .top {
@@ -35,7 +43,7 @@
 }
 
 .amount-block {
-  padding: 14px 0 8px;
+  padding: 6px 0 2px;
   text-align: center;
 }
 
@@ -66,7 +74,7 @@
 }
 
 .section {
-  margin: 4px 0 8px;
+  margin: 2px 0 6px;
 }
 
 .transfer,
@@ -83,7 +91,7 @@
 }
 
 .when {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .more-toggle {
@@ -92,7 +100,6 @@
   justify-content: space-between;
   width: 100%;
   min-height: 48px;
-  margin-top: 6px;
   padding: 0 4px;
   background: none;
   font-size: 15px;
@@ -123,10 +130,6 @@
   background: none;
   font-size: 16px;
   outline: none;
-}
-
-.keypad {
-  margin-top: 8px;
 }
 
 .actions {

@@ -148,17 +148,6 @@
     </div>
   }
 
-  <app-amount-keypad class="keypad" (pressed)="typeKey($event)" />
-
-  <div class="actions" [class.single]="isEdit()">
-    @if (!isEdit()) {
-      <button type="button" class="pal-button secondary" [disabled]="!canSave()" (click)="save(true)">
-        Salva e aggiungi
-      </button>
-    }
-    <button type="button" class="pal-button" [disabled]="!canSave()" (click)="save(false)">Salva</button>
-  </div>
-
   <ion-modal class="pal-calendar" [isOpen]="calendarOpen()" (didDismiss)="calendarOpen.set(false)">
     <ng-template>
       <ion-datetime
@@ -171,3 +160,16 @@
     </ng-template>
   </ion-modal>
 </ion-content>
+
+<ion-footer class="editor-footer ion-no-border">
+  <app-amount-keypad (pressed)="typeKey($event)" />
+
+  <div class="actions" [class.single]="isEdit()">
+    @if (!isEdit()) {
+      <button type="button" class="pal-button secondary" [disabled]="!canSave()" (click)="save(true)">
+        Salva e aggiungi
+      </button>
+    }
+    <button type="button" class="pal-button" [disabled]="!canSave()" (click)="save(false)">Salva</button>
+  </div>
+</ion-footer>

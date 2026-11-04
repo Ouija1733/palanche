@@ -10,14 +10,42 @@ ion-toast.pal-toast {
   font-weight: var(--pal-font-semibold);
 }
 
+// "Annulla": teal and in sentence case (Material would make it uppercase).
+ion-toast.pal-toast::part(button) {
+  color: #2dd4bf;
+  font-weight: var(--pal-font-bold);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 // Page layout shared by every page (kept global so each page stylesheet stays small).
 
+// Safe areas: the app is drawn edge to edge, behind the status bar and the
+// navigation bar. `--ion-safe-area-*` hold their sizes (Ionic reads them from
+// the insets injected by Capacitor, and sets them to 0 where they do not
+// apply, e.g. at the top of a bottom sheet). Every page leaves that room:
+// - top: the page itself, or its ion-header when it has one;
+// - bottom: the tab bar inside the tabs, the page itself everywhere else.
 ion-content.pal-page {
   --background: var(--pal-bg);
   --padding-start: var(--pal-page-padding);
   --padding-end: var(--pal-page-padding);
   --padding-top: calc(var(--ion-safe-area-top, 0px) + 8px);
-  // Room for the FAB, so it never covers the last element.
+  --padding-bottom: calc(var(--ion-safe-area-bottom, 0px) + 24px);
+}
+
+// The header (ion-toolbar) already pads itself below the status bar.
+ion-header ~ ion-content.pal-page {
+  --padding-top: 8px;
+}
+
+// Inside the tabs the tab bar is below the content and covers the navigation bar.
+ion-tabs ion-content.pal-page {
+  --padding-bottom: 24px;
+}
+
+// Room for the FAB, so it never covers the last element.
+ion-content.pal-page.with-fab {
   --padding-bottom: 96px;
 }
 
@@ -45,6 +73,33 @@ app-balance-card + .pal-card {
   letter-spacing: 0.4px;
   text-transform: uppercase;
   color: var(--pal-text-muted);
+}
+
+// Text link in the primary color, e.g. "Storico" next to a section title.
+.pal-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--pal-primary);
+  font: inherit;
+  font-size: 15px;
+  font-weight: var(--pal-font-bold);
+  text-decoration: none;
+}
+
+// A whole list row that can be tapped (e.g. a transaction to edit).
+.pal-row-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
 }
 
 .pal-empty {
@@ -160,6 +215,66 @@ ion-modal.pal-calendar ion-datetime {
   --background: var(--pal-surface);
   --ion-color-primary: var(--pal-primary);
   --ion-color-primary-contrast: var(--pal-on-primary);
+}
+
+// Dialogs (multiple choice, confirm, rename): card surface, Manrope, sentence-case buttons.
+ion-alert.pal-alert {
+  --background: var(--pal-surface);
+  --max-width: min(360px, calc(100% - 32px));
+  font-family: var(--pal-font-family);
+}
+
+ion-alert.pal-alert .alert-wrapper {
+  border-radius: 20px;
+  box-shadow: none;
+}
+
+ion-alert.pal-alert .alert-title {
+  font-size: 18px;
+  font-weight: var(--pal-font-extrabold);
+  color: var(--pal-text);
+}
+
+ion-alert.pal-alert .alert-message,
+ion-alert.pal-alert .alert-checkbox-label {
+  color: var(--pal-text);
+  font-size: 15px;
+}
+
+ion-alert.pal-alert .alert-checkbox-group {
+  border-color: var(--pal-border);
+}
+
+ion-alert.pal-alert [aria-checked='true'] .alert-checkbox-icon {
+  border-color: var(--pal-primary);
+  background: var(--pal-primary);
+}
+
+ion-alert.pal-alert [aria-checked='true'] .alert-checkbox-inner {
+  border-color: var(--pal-on-primary);
+}
+
+ion-alert.pal-alert .alert-button {
+  min-height: 44px;
+  color: var(--pal-primary);
+  font-weight: var(--pal-font-bold);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+ion-alert.pal-alert .alert-button.danger {
+  color: var(--pal-danger);
+}
+
+ion-alert.pal-alert .alert-input {
+  color: var(--pal-text);
+  font-size: 16px;
+}
+
+ion-action-sheet.pal-action-sheet {
+  --background: var(--pal-surface);
+  --color: var(--pal-text);
+  font-family: var(--pal-font-family);
 }
 
 ion-action-sheet.pal-action-sheet .selected {

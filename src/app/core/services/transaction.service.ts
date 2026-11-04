@@ -2,7 +2,8 @@ import { inject, Injectable } from '@angular/core';
 
 import { DatabaseService } from '../db/database.service';
 import type { SqlExecutor } from '../db/sql-executor';
-import type { Transaction } from '../models/transaction';
+import type { Tag } from '../models/tag';
+import type { Transaction, TransactionFilter, TransactionListItem, TransactionSummary } from '../models/transaction';
 import type { TransactionType } from '../models/transaction-type';
 import { AccountsRepository } from '../repositories/accounts.repository';
 import { CategoriesRepository } from '../repositories/categories.repository';
@@ -65,6 +66,24 @@ export class TransactionService {
   private readonly settings = inject(SettingsRepository);
   private readonly changes = inject(DataChangesService);
 
+  /** Transactions matching the filter, newest first, ready to be listed; `page` pages through them. */
+  async list(
+    filter: TransactionFilter = {},
+    page: { limit?: number; offset?: number } = {},
+  ): Promise<TransactionListItem[]> {
+    return this.transactions.search(filter, page);
+  }
+
+  /** Count and net amount of everything matching the filter (not only the loaded page). */
+  async summarize(filter: TransactionFilter = {}): Promise<TransactionSummary> {
+    return this.transactions.summarize(filter);
+  }
+
+  /** Net amount per day for the filter, for the day totals of the list. */
+  async netByDate(filter: TransactionFilter = {}): Promise<Map<IsoDate, number>> {
+    return this.transactions.netByDate(filter);
+  }
+
   async getForEdit(id: string): Promise<EditableTransaction | null> {
     const transaction = await this.transactions.findById(id);
     if (!transaction) {
@@ -105,6 +124,11 @@ export class TransactionService {
   async restore(id: string): Promise<void> {
     await this.transactions.restore(id);
     this.changes.notify();
+  }
+
+  /** The existing tags, alphabetically, e.g. for the tag filter. */
+  async getTags(): Promise<Tag[]> {
+    return this.tags.findAll();
   }
 
   /** Names of the existing tags, for suggestions while typing. */

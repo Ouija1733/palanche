@@ -62,13 +62,15 @@ import { formatCents } from '../../core/utils/money';
       font-weight: var(--pal-font-extrabold);
       letter-spacing: -0.5px;
     }
+    /* Tiles share the row and grow to fit: one account takes the whole width. */
     .accounts {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
       margin-top: 14px;
     }
     .account {
+      flex: 1 1 96px;
       padding: 10px 12px;
       border-radius: 14px;
       background: color-mix(in srgb, var(--pal-on-primary) 12%, transparent);
