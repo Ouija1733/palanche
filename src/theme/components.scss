@@ -34,6 +34,19 @@ ion-content.pal-page {
   --padding-bottom: calc(var(--ion-safe-area-bottom, 0px) + 24px);
 }
 
+// A strip of page background behind the status bar: scrolled content slides
+// under it instead of under the clock and icons. Overlays (modals, sheets,
+// dialogs) have a much higher z-index and cover it.
+ion-app::after {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 10;
+  height: var(--ion-safe-area-top, 0px);
+  background: var(--pal-bg);
+  pointer-events: none;
+}
+
 // The header (ion-toolbar) already pads itself below the status bar.
 ion-header ~ ion-content.pal-page {
   --padding-top: 8px;
