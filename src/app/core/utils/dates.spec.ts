@@ -10,6 +10,7 @@ import {
   isValidIsoDate,
   isValidMonthStartDay,
   monthBounds,
+  monthsBetween,
   nowIso,
   parseIsoDate,
   toIsoDate,
@@ -100,6 +101,14 @@ describe('dates', () => {
     it('rejects invalid months', () => {
       expect(() => addMonths('2026-13', 1)).toThrow();
       expect(() => daysInMonth('2026-1')).toThrow();
+    });
+  });
+
+  describe('monthsBetween', () => {
+    it('counts months across years, in both directions', () => {
+      expect(monthsBetween('2026-11', '2026-11')).toBe(0);
+      expect(monthsBetween('2026-11', '2027-02')).toBe(3);
+      expect(monthsBetween('2027-02', '2026-11')).toBe(-3);
     });
   });
 

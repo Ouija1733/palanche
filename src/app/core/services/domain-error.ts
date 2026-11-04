@@ -18,7 +18,10 @@ export type DomainErrorCode =
   | 'CATEGORY_IN_USE'
   | 'CATEGORY_HAS_CHILDREN'
   | 'CATEGORY_SAME'
-  | 'INVALID_MONTH_START_DAY';
+  | 'INVALID_MONTH_START_DAY'
+  | 'BUDGET_CATEGORY_INVALID'
+  | 'BUDGET_EXISTS'
+  | 'ACCOUNT_NOT_SAVINGS';
 
 export class DomainError extends Error {
   constructor(

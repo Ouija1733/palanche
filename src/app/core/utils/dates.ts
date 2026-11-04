@@ -80,6 +80,13 @@ export function addMonths(month: YearMonth, months: number): YearMonth {
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
 }
 
+/** Months from `from` to `to`: "2026-11" → "2027-02" is 3 (negative if `to` comes first). */
+export function monthsBetween(from: YearMonth, to: YearMonth): number {
+  const [fromYear, fromMonth] = parseYearMonth(from);
+  const [toYear, toMonth] = parseYearMonth(to);
+  return (toYear - fromYear) * 12 + (toMonth - fromMonth);
+}
+
 /** Number of days in the month (leap years included). */
 export function daysInMonth(month: YearMonth): number {
   const [year, monthNumber] = parseYearMonth(month);

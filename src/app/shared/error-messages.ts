@@ -19,6 +19,9 @@ const DOMAIN_MESSAGES: Record<DomainErrorCode, string> = {
   CATEGORY_HAS_CHILDREN: 'Elimina o sposta prima le sottocategorie.',
   CATEGORY_SAME: 'Scegli una categoria diversa.',
   INVALID_MONTH_START_DAY: 'Il mese può iniziare in un giorno dall’1 al 28.',
+  BUDGET_CATEGORY_INVALID: 'Il budget si imposta su una categoria di spesa principale.',
+  BUDGET_EXISTS: 'Per questa categoria c’è già un budget in questo mese.',
+  ACCOUNT_NOT_SAVINGS: 'Collega l’obiettivo a un conto di risparmio attivo.',
 };
 
 const BACKUP_MESSAGES: Record<BackupErrorCode, string> = {
