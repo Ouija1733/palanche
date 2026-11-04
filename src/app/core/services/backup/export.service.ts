@@ -2,7 +2,9 @@ import { inject, Injectable } from '@angular/core';
 
 import { DatabaseService } from '../../db/database.service';
 import { AccountsRepository } from '../../repositories/accounts.repository';
+import { BudgetsRepository } from '../../repositories/budgets.repository';
 import { CategoriesRepository } from '../../repositories/categories.repository';
+import { SavingsGoalsRepository } from '../../repositories/savings-goals.repository';
 import { SettingsRepository } from '../../repositories/settings.repository';
 import { TagsRepository } from '../../repositories/tags.repository';
 import { TransactionsRepository } from '../../repositories/transactions.repository';
@@ -20,6 +22,8 @@ export class ExportService {
   private readonly categories = inject(CategoriesRepository);
   private readonly transactions = inject(TransactionsRepository);
   private readonly tags = inject(TagsRepository);
+  private readonly budgets = inject(BudgetsRepository);
+  private readonly savingsGoals = inject(SavingsGoalsRepository);
   private readonly settings = inject(SettingsRepository);
   private readonly files = inject(BackupFilesService);
 
@@ -34,8 +38,8 @@ export class ExportService {
       transactions: await this.transactions.findAllIncludingDeleted(tx),
       tags: await this.tags.findAllIncludingDeleted(tx),
       transactionTags: await this.tags.findAllLinksIncludingDeleted(tx),
-      budgets: [],
-      savingsGoals: [],
+      budgets: await this.budgets.findAllIncludingDeleted(tx),
+      savingsGoals: await this.savingsGoals.findAllIncludingDeleted(tx),
       recurringRules: [],
       categorizationRules: [],
       settings: await this.settings.getAll(tx),

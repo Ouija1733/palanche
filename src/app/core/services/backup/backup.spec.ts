@@ -5,10 +5,13 @@ import { createMigratedTestExecutor } from '../../../../testing/sqljs-executor';
 import { DatabaseService } from '../../db/database.service';
 import type { SqlExecutor } from '../../db/sql-executor';
 import { AccountsRepository } from '../../repositories/accounts.repository';
+import { BudgetsRepository } from '../../repositories/budgets.repository';
+import { SavingsGoalsRepository } from '../../repositories/savings-goals.repository';
 import { SettingsRepository } from '../../repositories/settings.repository';
 import { TagsRepository } from '../../repositories/tags.repository';
 import { TransactionsRepository } from '../../repositories/transactions.repository';
 import { AccountService } from '../account.service';
+import { BudgetService } from '../budget.service';
 import { CategoryService } from '../category.service';
 import { DataChangesService } from '../data-changes.service';
 import { TransactionService } from '../transaction.service';
@@ -18,7 +21,16 @@ import type { BackupFile } from './backup-format';
 import { ExportService } from './export.service';
 import { ImportService } from './import.service';
 
-const TABLES = ['accounts', 'categories', 'transactions', 'tags', 'transaction_tags', 'settings'] as const;
+const TABLES = [
+  'accounts',
+  'categories',
+  'transactions',
+  'tags',
+  'transaction_tags',
+  'budgets',
+  'savings_goals',
+  'settings',
+] as const;
 const NOW = new Date('2026-11-15T18:00:00Z');
 
 /** Every row of every table, in a stable order: two databases are identical iff these are equal. */
@@ -106,6 +118,18 @@ async function seedVariedData(): Promise<void> {
     tags: ['sbagliato'],
   });
   await transactions.delete(deleted.id);
+
+  // Budgets: a category, the total, a removed one, another month. Goals: one with a date, one deleted.
+  const budgets = TestBed.inject(BudgetService);
+  await budgets.setBudget('2026-11', home.id, 150000);
+  await budgets.setBudget('2026-11', null, 250000);
+  await budgets.setBudget('2026-10', bar.id, 3000);
+  const removed = await budgets.setBudget('2026-11', bar.id, 2000);
+  await budgets.removeBudget(removed.id);
+  const goals = TestBed.inject(SavingsGoalsRepository);
+  await goals.create({ name: 'Viaggio in Perù', targetCents: 300000, targetDate: '2027-06-30', accountId: old.id });
+  const dropped = await goals.create({ name: 'Auto', targetCents: 800000, targetDate: null, accountId: old.id });
+  await goals.softDelete(dropped.id);
   vi.useRealTimers();
 }
 
@@ -147,8 +171,6 @@ describe('backup export / import', () => {
           app: 'palanche',
           schemaVersion: 2,
           exportedAt: '2026-11-15T18:00:00.000Z',
-          budgets: [],
-          savingsGoals: [],
           recurringRules: [],
           categorizationRules: [],
         }),
@@ -161,6 +183,11 @@ describe('backup export / import', () => {
       expect(file.categories.filter((c) => c.deletedAt !== null)).toHaveLength(1);
       expect(file.transactions.filter((t) => t.deletedAt !== null)).toHaveLength(1);
       expect(file.transactionTags.filter((l) => l.deletedAt !== null)).toHaveLength(1);
+      expect(file.budgets).toHaveLength(4);
+      expect(file.budgets.filter((b) => b.deletedAt !== null)).toHaveLength(1);
+      expect(file.budgets.filter((b) => b.categoryId === null)).toHaveLength(1);
+      expect(file.savingsGoals).toHaveLength(2);
+      expect(file.savingsGoals.filter((g) => g.deletedAt !== null)).toHaveLength(1);
       expect(file.settings).toEqual(expect.objectContaining({ last_export_at: '2026-10-01T00:00:00.000Z' }));
     });
 
@@ -220,6 +247,8 @@ describe('backup export / import', () => {
         categories: 4,
         transactions: 4,
         tags: 3,
+        budgets: 3,
+        savingsGoals: 1,
       });
     });
   });
@@ -279,7 +308,15 @@ describe('backup export / import', () => {
 
       const result = await importer.merge(backup);
 
-      expect(result).toEqual({ accounts: 4, categories: 5, transactions: 5, tags: 3, transactionTags: 4 });
+      expect(result).toEqual({
+        accounts: 4,
+        categories: 5,
+        transactions: 5,
+        tags: 3,
+        transactionTags: 4,
+        budgets: 4,
+        savingsGoals: 2,
+      });
       const names = (await TestBed.inject(AccountsRepository).findAll({ includeArchived: true })).map((a) => a.name);
       expect(names).toEqual(expect.arrayContaining(['Conto del target', 'Conto corrente', 'Libretto']));
     });
@@ -296,6 +333,8 @@ describe('backup export / import', () => {
         transactions: 0,
         tags: 0,
         transactionTags: 0,
+        budgets: 0,
+        savingsGoals: 0,
       });
       expect(await dumpTables(target)).toEqual(afterFirst);
     });
@@ -348,6 +387,90 @@ describe('backup export / import', () => {
 
       expect(await settings.get('last_export_at')).toBe('local');
       expect(await settings.get('last_account_id')).toBe(backup.settings['last_account_id']);
+    });
+
+    describe('two active budgets for the same category and month', () => {
+      // The source database plays the "other device": the backup carries its Casa budget for November.
+      let backup: BackupFile;
+      let incoming: BackupFile['budgets'][number];
+
+      beforeEach(async () => {
+        backup = await exporter.build(NOW);
+        incoming = backup.budgets.find((b) => b.month === '2026-11' && b.categoryId !== null && !b.deletedAt)!;
+        // Same database, so the categories exist: the local budget gets a different id.
+        vi.useFakeTimers({ now: new Date('2026-10-31T00:00:00Z'), toFake: ['Date'] });
+        await TestBed.inject(BudgetsRepository).softDelete(incoming.id);
+        vi.useRealTimers();
+      });
+
+      async function createLocal(updatedAt: string) {
+        vi.useFakeTimers({ now: new Date(updatedAt), toFake: ['Date'] });
+        const local = await TestBed.inject(BudgetService).setBudget('2026-11', incoming.categoryId, 99900);
+        vi.useRealTimers();
+        return local;
+      }
+
+      it('keeps the incoming budget when it is more recent, and deletes the local one', async () => {
+        const local = await createLocal('2026-11-01T00:00:00.000Z');
+        const newer = { ...incoming, updatedAt: '2026-11-10T00:00:00.000Z' };
+
+        await importer.merge({ ...backup, budgets: [newer] }, NOW);
+
+        const budgets = TestBed.inject(BudgetsRepository);
+        expect((await budgets.findOne('2026-11', incoming.categoryId))?.id).toBe(incoming.id);
+        const localRow = (await budgets.findAllIncludingDeleted()).find((b) => b.id === local.id);
+        expect(localRow?.deletedAt).toBe('2026-11-15T18:00:00.000Z');
+        expect(localRow?.updatedAt).toBe('2026-11-15T18:00:00.000Z');
+      });
+
+      it('keeps the local budget when it is more recent, and deletes the incoming one', async () => {
+        const local = await createLocal('2026-11-12T00:00:00.000Z');
+        const older = { ...incoming, updatedAt: '2026-11-10T00:00:00.000Z' };
+
+        const result = await importer.merge({ ...backup, budgets: [older] }, NOW);
+
+        const budgets = TestBed.inject(BudgetsRepository);
+        expect((await budgets.findOne('2026-11', incoming.categoryId))?.id).toBe(local.id);
+        const incomingRow = (await budgets.findAllIncludingDeleted()).find((b) => b.id === incoming.id);
+        expect(incomingRow?.deletedAt).toBe('2026-11-15T18:00:00.000Z');
+        expect(result.budgets).toBe(1);
+      });
+    });
+  });
+
+  describe('backups of older versions', () => {
+    /** A version 1 file, as exported by Palanche 0.0.1 (phase 1): no budgets and no goals yet. */
+    async function versionOneText(options: { dropArrays?: boolean } = {}): Promise<string> {
+      const file: Record<string, unknown> = {
+        ...(await exporter.build(NOW)),
+        schemaVersion: 1,
+        budgets: [],
+        savingsGoals: [],
+      };
+      if (options.dropArrays) {
+        delete file['budgets'];
+        delete file['savingsGoals'];
+      }
+      return JSON.stringify(file);
+    }
+
+    it('imports a version 1 backup, upgraded to the current version', async () => {
+      const text = await versionOneText();
+      database.db = target;
+
+      const parsed = importer.parse(text);
+      expect(parsed.schemaVersion).toBe(2);
+      expect(parsed.budgets).toEqual([]);
+      await importer.replace(parsed, NOW);
+
+      expect(await TestBed.inject(TransactionsRepository).findAllIncludingDeleted()).toHaveLength(5);
+      expect(await TestBed.inject(BudgetsRepository).findAllIncludingDeleted()).toEqual([]);
+    });
+
+    it('accepts a version 1 backup even without the empty arrays', async () => {
+      const parsed = importer.parse(await versionOneText({ dropArrays: true }));
+      expect(parsed.budgets).toEqual([]);
+      expect(parsed.savingsGoals).toEqual([]);
     });
   });
 });

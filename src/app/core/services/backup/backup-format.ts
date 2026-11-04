@@ -1,6 +1,8 @@
 import { MIGRATIONS } from '../../db/migrations';
 import type { Account } from '../../models/account';
+import type { Budget } from '../../models/budget';
 import type { Category } from '../../models/category';
+import type { SavingsGoal } from '../../models/savings-goal';
 import type { Tag, TransactionTag } from '../../models/tag';
 import type { Transaction } from '../../models/transaction';
 
@@ -25,10 +27,10 @@ export interface BackupFile {
   transactions: Transaction[];
   tags: Tag[];
   transactionTags: TransactionTag[];
-  /** Phase 2. */
-  budgets: never[];
-  /** Phase 2. */
-  savingsGoals: never[];
+  /** Since schema version 2. */
+  budgets: Budget[];
+  /** Since schema version 2. */
+  savingsGoals: SavingsGoal[];
   /** Phase 3. */
   recurringRules: never[];
   /** Phase 3. */
@@ -44,6 +46,8 @@ export interface BackupSummary {
   categories: number;
   transactions: number;
   tags: number;
+  budgets: number;
+  savingsGoals: number;
 }
 
 export function summarizeBackup(file: BackupFile): BackupSummary {
@@ -55,6 +59,8 @@ export function summarizeBackup(file: BackupFile): BackupSummary {
     categories: active(file.categories),
     transactions: active(file.transactions),
     tags: active(file.tags),
+    budgets: active(file.budgets),
+    savingsGoals: active(file.savingsGoals),
   };
 }
 

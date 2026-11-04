@@ -2,11 +2,15 @@ import { inject, Injectable } from '@angular/core';
 
 import { DatabaseService } from '../../db/database.service';
 import type { SqlExecutor } from '../../db/sql-executor';
+import type { Budget } from '../../models/budget';
 import { AccountsRepository } from '../../repositories/accounts.repository';
+import { BudgetsRepository } from '../../repositories/budgets.repository';
 import { CategoriesRepository } from '../../repositories/categories.repository';
+import { SavingsGoalsRepository } from '../../repositories/savings-goals.repository';
 import { SettingsRepository } from '../../repositories/settings.repository';
 import { TagsRepository } from '../../repositories/tags.repository';
 import { TransactionsRepository } from '../../repositories/transactions.repository';
+import { nowIso } from '../../utils/dates';
 import { DataChangesService } from '../data-changes.service';
 import { PreferencesService } from '../preferences.service';
 
@@ -23,6 +27,8 @@ export interface MergeResult {
   transactions: number;
   tags: number;
   transactionTags: number;
+  budgets: number;
+  savingsGoals: number;
 }
 
 interface Versioned {
@@ -40,6 +46,38 @@ function newerRows<T extends Versioned>(incoming: readonly T[], local: readonly 
 }
 
 /**
+ * Budgets to write in a merge. Two devices can each create a budget for the
+ * same category and month, with different ids: after the merge only one may
+ * stay active (unique index). The one with the most recent updated_at wins;
+ * the others are soft-deleted, local or incoming. Deletions come first in the
+ * result, so the index never sees two active budgets for the same slot.
+ */
+export function mergeBudgets(local: readonly Budget[], incomingNewer: readonly Budget[], now: string): Budget[] {
+  const merged = new Map(local.map((budget) => [budget.id, budget]));
+  const toWrite = new Map<string, Budget>();
+  for (const budget of incomingNewer) {
+    merged.set(budget.id, budget);
+    toWrite.set(budget.id, budget);
+  }
+
+  const activeBySlot = new Map<string, Budget[]>();
+  for (const budget of merged.values()) {
+    if (budget.deletedAt === null) {
+      const slot = `${budget.month}|${budget.categoryId ?? ''}`;
+      activeBySlot.set(slot, [...(activeBySlot.get(slot) ?? []), budget]);
+    }
+  }
+  for (const rows of activeBySlot.values()) {
+    // Most recent first; the id breaks ties so that every device makes the same choice.
+    const [, ...losers] = [...rows].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.id.localeCompare(a.id));
+    for (const loser of losers) {
+      toWrite.set(loser.id, { ...loser, deletedAt: now, updatedAt: now });
+    }
+  }
+  return [...toWrite.values()].sort((a, b) => Number(a.deletedAt === null) - Number(b.deletedAt === null));
+}
+
+/**
  * Restores a JSON backup. Flow: `parse` → show `summarize` → `replace` or
  * `merge`. Both write everything in one SQL transaction: if anything fails,
  * the database is left exactly as it was.
@@ -51,6 +89,8 @@ export class ImportService {
   private readonly categories = inject(CategoriesRepository);
   private readonly transactions = inject(TransactionsRepository);
   private readonly tags = inject(TagsRepository);
+  private readonly budgets = inject(BudgetsRepository);
+  private readonly savingsGoals = inject(SavingsGoalsRepository);
   private readonly settings = inject(SettingsRepository);
   private readonly exporter = inject(ExportService);
   private readonly files = inject(BackupFilesService);
@@ -76,6 +116,8 @@ export class ImportService {
 
     await this.database.db.transaction(async (tx) => {
       // Children before parents, so that no foreign key is ever left dangling.
+      await this.budgets.deleteAll(tx);
+      await this.savingsGoals.deleteAll(tx);
       await this.tags.deleteAll(tx);
       await this.transactions.deleteAll(tx);
       await this.categories.deleteAll(tx);
@@ -96,7 +138,7 @@ export class ImportService {
    * they are updates of deleted_at). Local settings are kept; only keys
    * missing locally are added.
    */
-  async merge(file: BackupFile): Promise<MergeResult> {
+  async merge(file: BackupFile, now: Date = new Date()): Promise<MergeResult> {
     const result = await this.database.db.transaction(async (tx) => {
       const accounts = newerRows(file.accounts, await this.accounts.findAllIncludingDeleted(tx));
       const categories = newerRows(file.categories, await this.categories.findAllIncludingDeleted(tx));
@@ -134,7 +176,11 @@ export class ImportService {
         return link.deletedAt !== null || localId === undefined || localId === link.id;
       });
 
-      await this.writeRows({ accounts, categories, transactions, tags, transactionTags }, tx);
+      const savingsGoals = newerRows(file.savingsGoals, await this.savingsGoals.findAllIncludingDeleted(tx));
+      const localBudgets = await this.budgets.findAllIncludingDeleted(tx);
+      const budgets = mergeBudgets(localBudgets, newerRows(file.budgets, localBudgets), nowIso(now));
+
+      await this.writeRows({ accounts, categories, transactions, tags, transactionTags, budgets, savingsGoals }, tx);
 
       const localSettings = await this.settings.getAll(tx);
       const missingSettings = Object.fromEntries(
@@ -148,6 +194,8 @@ export class ImportService {
         transactions: transactions.length,
         tags: tags.length,
         transactionTags: transactionTags.length,
+        budgets: budgets.length,
+        savingsGoals: savingsGoals.length,
       };
     });
     // A restore may change the preferences too (e.g. the month start day).
@@ -158,7 +206,10 @@ export class ImportService {
 
   /** Writes rows in foreign-key order: referenced tables first. */
   private async writeRows(
-    rows: Pick<BackupFile, 'accounts' | 'categories' | 'transactions' | 'tags' | 'transactionTags'>,
+    rows: Pick<
+      BackupFile,
+      'accounts' | 'categories' | 'transactions' | 'tags' | 'transactionTags' | 'budgets' | 'savingsGoals'
+    >,
     tx: SqlExecutor,
   ): Promise<void> {
     await this.accounts.upsertAll(rows.accounts, tx);
@@ -166,5 +217,7 @@ export class ImportService {
     await this.tags.upsertAll(rows.tags, tx);
     await this.transactions.upsertAll(rows.transactions, tx);
     await this.tags.upsertAllLinks(rows.transactionTags, tx);
+    await this.budgets.upsertAll(rows.budgets, tx);
+    await this.savingsGoals.upsertAll(rows.savingsGoals, tx);
   }
 }

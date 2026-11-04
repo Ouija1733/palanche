@@ -83,8 +83,23 @@ function validBackup(): Record<string, unknown> {
     ],
     tags: [{ id: 'g1', name: 'casa', ...stamps }],
     transactionTags: [{ id: 'l1', transactionId: 't1', tagId: 'g1', ...stamps }],
-    budgets: [],
-    savingsGoals: [],
+    budgets: [
+      { id: 'b1', categoryId: 'c1', month: '2026-11', amountCents: 15000, ...stamps },
+      { id: 'b2', categoryId: null, month: '2026-11', amountCents: 95000, ...stamps },
+      { id: 'b3', categoryId: 'c1', month: '2026-11', amountCents: 10000, ...stamps, deletedAt: T },
+    ],
+    savingsGoals: [
+      {
+        id: 's1',
+        name: 'Viaggio',
+        targetCents: 300000,
+        targetDate: '2027-06-30',
+        accountId: 'a2',
+        sortOrder: 0,
+        ...stamps,
+      },
+      { id: 's2', name: 'Fondo', targetCents: 100000, targetDate: null, accountId: 'a2', sortOrder: 1, ...stamps },
+    ],
     recurringRules: [],
     categorizationRules: [],
     settings: { onboarding_completed_at: T, last_account_id: null },
@@ -115,6 +130,8 @@ describe('parseBackup', () => {
     expect(file.accounts[1]).toEqual(expect.objectContaining({ id: 'a2', archived: true }));
     expect(file.transactions[1]).toEqual(expect.objectContaining({ type: 'transfer', toAccountId: 'a2' }));
     expect(file.settings).toEqual({ onboarding_completed_at: T, last_account_id: null });
+    expect(file.budgets.map((b) => b.categoryId)).toEqual(['c1', null, 'c1']);
+    expect(file.savingsGoals[1]).toEqual(expect.objectContaining({ id: 's2', targetDate: null }));
   });
 
   it('ignores unknown extra fields', () => {
@@ -157,6 +174,15 @@ describe('parseBackup', () => {
     ['an expense with destination', (b) => (b['transactions'][0]['toAccountId'] = 'a2'), /toAccountId/],
     ['a transfer to itself', (b) => (b['transactions'][1]['toAccountId'] = 'a1'), /toAccountId/],
     ['a non-string setting', (b) => (b['settings']['x'] = 3), /settings\.x/],
-    ['rows in a future table', (b) => (b['budgets'] = [{ id: 'b1' }]), /budgets/],
+    ['rows in a future table', (b) => (b['recurringRules'] = [{ id: 'r1' }]), /recurringRules/],
+    ['a budget month with a day', (b) => (b['budgets'][0]['month'] = '2026-11-01'), /budgets\[0\]\.month/],
+    ['a budget month 13', (b) => (b['budgets'][0]['month'] = '2026-13'), /budgets\[0\]\.month/],
+    ['a zero budget', (b) => (b['budgets'][0]['amountCents'] = 0), /budgets\[0\]\.amountCents/],
+    ['a budget of a missing category', (b) => (b['budgets'][0]['categoryId'] = 'zz'), /budgets\[0\]\.categoryId/],
+    ['two active budgets for the same slot', (b) => (b['budgets'][2]['deletedAt'] = null), /budgets\[2\]/],
+    ['two active totals in a month', (b) => (b['budgets'][0]['categoryId'] = null), /budgets\[1\]/],
+    ['a goal of a missing account', (b) => (b['savingsGoals'][0]['accountId'] = 'zz'), /savingsGoals\[0\]\.accountId/],
+    ['a goal with an impossible date', (b) => (b['savingsGoals'][0]['targetDate'] = '2027-02-30'), /targetDate/],
+    ['a zero goal', (b) => (b['savingsGoals'][1]['targetCents'] = 0), /savingsGoals\[1\]\.targetCents/],
   ])('rejects %s', (_label, mutate, detail) => expectError(mutate, 'INVALID_DATA', detail));
 });

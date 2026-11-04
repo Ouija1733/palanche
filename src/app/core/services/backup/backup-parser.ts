@@ -14,9 +14,10 @@ import { BACKUP_UPGRADES } from './backup-upgrades';
 const ACCOUNT_TYPES: readonly AccountType[] = ['cash', 'checking', 'card', 'savings'];
 const CATEGORY_KINDS: readonly CategoryKind[] = ['expense', 'income'];
 const TRANSACTION_TYPES: readonly TransactionType[] = ['expense', 'income', 'transfer'];
-const FUTURE_TABLES = ['budgets', 'savingsGoals', 'recurringRules', 'categorizationRules'] as const;
+const FUTURE_TABLES = ['recurringRules', 'categorizationRules'] as const;
 
 const TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
+const YEAR_MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 type Row = Record<string, unknown>;
 
@@ -78,6 +79,15 @@ class RowReader {
   date(field: string): string {
     const value = this.string(field);
     return isValidIsoDate(value) ? value : invalid(`${this.path}.${field}`, 'a YYYY-MM-DD date');
+  }
+
+  nullableDate(field: string): string | null {
+    return this.row[field] == null ? null : this.date(field);
+  }
+
+  yearMonth(field: string): string {
+    const value = this.string(field);
+    return YEAR_MONTH_PATTERN.test(value) ? value : invalid(`${this.path}.${field}`, 'a YYYY-MM month');
   }
 
   timestamp(field: string): string {
@@ -166,6 +176,25 @@ function checkConsistency(file: BackupFile): void {
     reference(`transactionTags[${i}].transactionId`, link.transactionId, transactions);
     reference(`transactionTags[${i}].tagId`, link.tagId, tags);
   });
+
+  ids('budgets', file.budgets);
+  const activeBudgetSlots = new Set<string>();
+  file.budgets.forEach((budget, i) => {
+    reference(`budgets[${i}].categoryId`, budget.categoryId, categories);
+    if (budget.deletedAt === null) {
+      // Same rule as the unique index: one active budget per category (or total) and month.
+      const slot = `${budget.month}|${budget.categoryId ?? ''}`;
+      if (activeBudgetSlots.has(slot)) {
+        invalid(`budgets[${i}]`, 'a single active budget per category and month');
+      }
+      activeBudgetSlots.add(slot);
+    }
+  });
+
+  ids('savingsGoals', file.savingsGoals);
+  file.savingsGoals.forEach((goal, i) => {
+    reference(`savingsGoals[${i}].accountId`, goal.accountId, accounts);
+  });
 }
 
 function upgrade(data: Row, fromVersion: number): Row {
@@ -250,8 +279,22 @@ export function parseBackup(text: string): BackupFile {
       tagId: r.string('tagId'),
       ...timestamps(r),
     })),
-    budgets: [],
-    savingsGoals: [],
+    budgets: readTable(data, 'budgets', (r) => ({
+      id: r.string('id'),
+      categoryId: r.nullableString('categoryId'),
+      month: r.yearMonth('month'),
+      amountCents: r.int('amountCents', 1),
+      ...timestamps(r),
+    })),
+    savingsGoals: readTable(data, 'savingsGoals', (r) => ({
+      id: r.string('id'),
+      name: r.string('name'),
+      targetCents: r.int('targetCents', 1),
+      targetDate: r.nullableDate('targetDate'),
+      accountId: r.string('accountId'),
+      sortOrder: r.int('sortOrder'),
+      ...timestamps(r),
+    })),
     recurringRules: [],
     categorizationRules: [],
     settings: readSettings(data),

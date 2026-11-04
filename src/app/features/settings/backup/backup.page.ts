@@ -74,6 +74,13 @@ interface PendingImport {
             <li>
               <strong>{{ pending.summary.tags }}</strong> tag
             </li>
+            <li>
+              <strong>{{ pending.summary.budgets }}</strong> budget
+            </li>
+            <li>
+              <strong>{{ pending.summary.savingsGoals }}</strong>
+              {{ plural(pending.summary.savingsGoals, 'obiettivo', 'obiettivi') }} di risparmio
+            </li>
           </ul>
           <div class="choices">
             <button type="button" class="choice" [disabled]="busy()" (click)="merge(pending)">
