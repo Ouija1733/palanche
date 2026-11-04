@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Merged on top of src/main/AndroidManifest.xml in release builds only.
+  Palanche works fully offline, so the release app gets no network access at
+  all: privacy is enforced by Android, not only by the code. Debug builds keep
+  INTERNET because live reload needs it.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+</manifest>
