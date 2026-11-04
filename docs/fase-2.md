@@ -23,6 +23,7 @@ Più: lint, test e `ionic build` verdi a ogni task; verifica finale su emulatore
 - **Budget solo sulle categorie di spesa principali**: la spesa di una principale include le sue sottocategorie (come nel mockup 04). **Budget totale** = riga di `budgets` con `category_id NULL`. Importo budget > 0; togliere un budget = soft delete con toast "Annulla".
 - **Totale del mese** (confermato al punto di controllo 1): se il budget totale non è impostato, il totale è la somma dei budget delle categorie confrontata con la spesa in quelle categorie, con etichetta **"Somma dei budget"**; se è impostato, si confronta con tutte le spese del mese, con etichetta **"Budget del mese"**.
 - **Soglie e percentuali**: barra primaria sotto l'80%, ambra dall'80% al 100% compreso, rossa solo oltre il 100%; percentuali arrotondate per difetto.
+- **Importi nella pagina Budget**: un solo formato (`formatCentsCompact` in `utils/money.ts`): senza ",00" quando l'importo è intero, con i decimali quando non lo è (es. "€ 6.100", "€ 4,50").
 - **"Copia da <mese precedente>"**: copia in una transazione i budget del periodo precedente (totale compreso) solo dove il mese corrente non ne ha già uno; restituisce quanti ne ha copiati.
 - **Categorie con spese ma senza budget**: in fondo alla pagina Budget, raggruppate, con tocco per impostarne uno.
 - **Tacca "dove dovresti essere oggi"** = giorni trascorsi / giorni del periodo (contabile, non di calendario); solo per il periodo corrente.

@@ -8,7 +8,7 @@ import { BudgetService } from '../../core/services/budget.service';
 import { CategoryService } from '../../core/services/category.service';
 import { DataChangesService } from '../../core/services/data-changes.service';
 import { addMonths } from '../../core/utils/dates';
-import { formatCents, formatCentsCompact } from '../../core/utils/money';
+import { formatCentsCompact } from '../../core/utils/money';
 import { BudgetProgressComponent } from '../../shared/budget-progress/budget-progress.component';
 import { CategoryIconComponent } from '../../shared/category-icon/category-icon.component';
 import { ChoiceService } from '../../shared/choice.service';
@@ -57,13 +57,13 @@ const TOTAL_CHOICE = '__total__';
           <button type="button" class="pal-card pal-row-button total" (click)="editTotal(total.budget)">
             <span class="label">{{ total.budget ? 'Budget del mese' : 'Somma dei budget' }}</span>
             <span class="figures">
-              <span class="spent">{{ format(total.spentCents) }}</span>
+              <span class="spent">{{ compact(total.spentCents) }}</span>
               <span class="of">/ {{ compact(total.amountCents) }}</span>
               <span class="left" [class.over]="total.status === 'over'">
                 @if (total.status === 'over') {
-                  Sforato di {{ format(-total.remainingCents) }}
+                  Sforato di {{ compact(-total.remainingCents) }}
                 } @else {
-                  {{ format(total.remainingCents) }} residui
+                  {{ compact(total.remainingCents) }} residui
                 }
               </span>
             </span>
@@ -125,7 +125,7 @@ const TOTAL_CHOICE = '__total__';
               <button type="button" class="pal-row-button free" (click)="edit(item.category, null)">
                 <app-category-icon [icon]="item.category.icon" [color]="item.category.color" size="small" />
                 <span class="name">{{ item.category.name }}</span>
-                <span class="amounts">{{ format(item.spentCents) }}</span>
+                <span class="amounts">{{ compact(item.spentCents) }}</span>
               </button>
             }
           </section>
@@ -284,7 +284,6 @@ export class BudgetPage {
   private readonly toast = inject(ToastService);
   private readonly months = inject(SelectedMonthService);
 
-  protected readonly format = formatCents;
   protected readonly compact = formatCentsCompact;
   protected readonly busy = signal(false);
 
