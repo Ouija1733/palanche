@@ -63,7 +63,8 @@ Ionic + Capacitor con SQLite nativo, organizzato a strati: le pagine non toccano
 | File | `@capacitor/filesystem`, `@capacitor/share`, un file picker Capacitor per l'import |
 | Notifiche | `@capacitor/local-notifications` |
 | Grafici | Chart.js |
-| CSV | PapaParse |
+| CSV | Export con un serializzatore interno (fase 2); PapaParse solo per leggere il CSV della banca (fase 3) |
+| Cartella dei backup automatici | Plugin Capacitor locale in Java (`BackupFolder`, Storage Access Framework), nessuna dipendenza esterna |
 | Impostazioni | Tabella `settings` in SQLite, non localStorage |
 | Test | Unit test su servizi e repository, test di round-trip export/import |
 
@@ -194,7 +195,7 @@ Il flusso standard è importo → categoria → salva.
 - **Regole di categorizzazione** (fase 3): "se la descrizione contiene X, usa la categoria Y".
 - **Import CSV banca** (fase 3): scelta del file, mappatura delle colonne, anteprima, conferma.
 - **Backup e dati**: vedi la sezione dedicata.
-- **Preferenze**: tema, valuta di default, giorno di inizio del mese contabile, notifiche.
+- **Preferenze**: giorno di inizio del mese contabile, notifiche dei budget. Il tema segue il sistema e la valuta è sempre EUR, quindi non sono scelte.
 
 ## Modello dati
 
@@ -285,11 +286,11 @@ Onboarding, conti, categorie predefinite, nuovo movimento, lista movimenti, expo
 - [x] Export, disinstallazione, reinstallazione, import: tutti i dati identici
 - [x] Una cancellazione si può annullare dal toast
 
-Chiusa il 4 novembre 2026. Tutti i criteri sono verificati sia sull'emulatore (Medium Phone API 37, tema chiaro e scuro, navigazione a gesti e a tre pulsanti) sia sul telefono fisico, nell'uso reale. La prova sul telefono chiude anche quella rimandata dalla fase 0. Il piano dettagliato, con i task T1–T17, è in `docs/fase-1.md`.
+Chiusa il 4 novembre 2026. Tutti i criteri sono verificati sull'emulatore (Medium Phone API 37, tema chiaro e scuro, navigazione a gesti e a tre pulsanti). La prova sul telefono fisico non è ancora stata fatta: si farà nei prossimi giorni e chiuderà anche quella rimandata dalla fase 0. Il piano dettagliato, con i task T1–T17, è in `docs/fase-1.md`.
 
 ### Fase 2 — Controllo
 
-Budget, home completa, notifiche all'80% e al 100%, export CSV, backup automatico, obiettivi di risparmio.
+Budget, home completa, notifiche all'80% e al 100%, export CSV, backup automatico, obiettivi di risparmio, pagina Preferenze. Il piano dettagliato è in `docs/fase-2.md`.
 
 - [ ] Un budget sforato mostra la barra rossa e invia una notifica una sola volta
 - [ ] "Copia dal mese precedente" riporta tutti i budget
@@ -325,9 +326,9 @@ Queste vanno chiuse prima della fase 0 o della fase indicata.
 - [ ] **Scadenza**: "relativamente in fretta" significa entro quando? Serve per decidere se la fase 2 rientra nel primo rilascio.
 - [x] **Nome dell'app**: Palanche (package `dev.ouija.palanche`).
 - [ ] **Icona** dell'app.
-- [ ] **Giorno di inizio del mese contabile**: il 1° o il giorno in cui arriva lo stipendio?
+- [x] **Giorno di inizio del mese contabile**: si sceglie in Preferenze, dal 1 al 28 (predefinito il 1°). Il periodo prende il nome del mese che contiene la maggior parte dei suoi giorni: con inizio tra l'1 e il 15 quello in cui inizia, dal 16 in poi quello in cui finisce (inizio 27: "Novembre" = 27 ottobre – 26 novembre). Tutti i calcoli di periodo passano da un'unica funzione in `utils/dates.ts`; cambiare il giorno non modifica nessun dato salvato, solo come i movimenti vengono raggruppati.
 - [x] **Trasferimenti tra conti**: inclusi nell'MVP (fase 1).
-- [ ] **Backup automatico di Android** (`allowBackup`): lasciarlo attivo come rete di sicurezza in più, o disattivarlo perché i dati finiscono su Google?
+- [x] **Backup automatico di Android**: disattivato (`android:allowBackup="false"`, e regole di estrazione dei dati che escludono sia il backup sul cloud sia il trasferimento tra dispositivi). I dati esistono solo nell'app e nei file esportati dall'utente.
 - [x] **Categorie predefinite**: vedi "Categorie predefinite" nella specifica dell'onboarding.
 - [ ] **Banca** da cui importerai il CSV in fase 3, per costruire il primo mappatore sul formato reale.
 - [x] **Più valute**: solo EUR. Il campo `currency` resta nel modello, l'interfaccia non mostra la scelta.

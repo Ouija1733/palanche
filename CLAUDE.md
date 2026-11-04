@@ -4,6 +4,8 @@
 **Tutto in locale**: nessun backend, nessun account, nessuna chiamata di rete.
 Il progetto è pubblico su GitHub e fa parte del portfolio del proprietario: il codice deve essere pulito, leggibile e ben strutturato.
 
+**Rispondi sempre in italiano** (codice, commit e commenti restano in inglese, vedi "Stack").
+
 Documenti di riferimento (leggili prima di iniziare una fase):
 - `docs/piano.md`: requisiti, pagine, modello dati, export/import, roadmap e criteri di accettazione.
 - `docs/mockup/*.png`: le schermate di riferimento (Home, Nuovo movimento, Movimenti, Budget, Analisi). Il layout e lo stile vanno seguiti fedelmente.
@@ -23,8 +25,9 @@ Documenti di riferimento (leggili prima di iniziare una fase):
   - Negli unit test il database è un SQLite vero in memoria (`src/testing/sqljs-executor.ts`) con le migrazioni reali.
 - File e condivisione: `@capacitor/filesystem`, `@capacitor/share`
 - Notifiche: `@capacitor/local-notifications`
+- Cartella dei backup automatici: plugin locale `BackupFolder` in Java (vedi "Plugin locali"), nessuna dipendenza esterna
 - Grafici: Chart.js
-- CSV: PapaParse
+- CSV: l'export usa un serializzatore interno (fase 2); PapaParse arriva solo in fase 3, per leggere il CSV della banca
 - Font: Manrope, **incluso nel bundle** tramite `@fontsource/manrope` (niente Google Fonts: l'app non deve fare richieste di rete)
 - Icone: Ionicons, sempre in variante `-outline`
 - Lingua dell'interfaccia: italiano. Codice, nomi di variabili, commit e commenti: inglese.
@@ -93,6 +96,14 @@ src/app/
   shared/          # componenti riusabili (vedi "Componenti condivisi")
   theme/           # variabili e token di design
 ```
+
+### Plugin locali (Java)
+
+Quando un'API Android non è coperta dai plugin ufficiali, si scrive un piccolo plugin Capacitor nel progetto invece di aggiungere una dipendenza:
+- classe Java con `@CapacitorPlugin(name = "...")` e metodi `@PluginMethod`, in un pacchetto sotto `android/app/src/main/java/dev/ouija/palanche/` (es. `backupfolder/`);
+- registrata in `MainActivity` con `registerPlugin(...)` **prima** di `super.onCreate(...)`;
+- dal TypeScript si usa con `registerPlugin<Interfaccia>('Nome')` in un wrapper dentro `core/services/`, che definisce anche il comportamento nel browser; la logica che lo usa si testa con un finto che implementa la stessa interfaccia;
+- solo API del framework Android, niente nuove dipendenze Gradle senza chiedere.
 
 ## Regole sui dati (non negoziabili)
 
@@ -196,8 +207,8 @@ Selettore del mese, card saldo, barra di avanzamento budget, riga movimento, ico
 
 ## Stato delle fasi
 
-- [x] Fase 0 — Setup (chiusa con la verifica sull'emulatore; la prova sul telefono fisico è stata fatta alla chiusura della fase 1)
-- [x] Fase 1 — MVP: registrare e salvare (chiusa il 4 novembre 2026: criteri verificati sull'emulatore e sul telefono fisico; piano in `docs/fase-1.md`)
-- [ ] Fase 2 — Controllo
+- [x] Fase 0 — Setup (chiusa con la verifica sull'emulatore; la prova sul telefono fisico è ancora da fare, insieme a quella della fase 1)
+- [x] Fase 1 — MVP: registrare e salvare (chiusa il 4 novembre 2026: criteri verificati sull'emulatore; la prova sul telefono fisico è ancora da fare; piano in `docs/fase-1.md`)
+- [ ] Fase 2 — Controllo (in corso; piano in `docs/fase-2.md`)
 - [ ] Fase 3 — Automazione
 - [ ] Fase 4 — Analisi e sicurezza
