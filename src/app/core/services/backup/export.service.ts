@@ -47,10 +47,21 @@ export class ExportService {
     return `${JSON.stringify(file, null, 2)}\n`;
   }
 
-  /** Exports now and opens the Android share sheet (a download in the browser). */
-  async exportAndShare(now: Date = new Date()): Promise<void> {
+  /** When the last JSON export was made (ISO timestamp), or null if never. */
+  async getLastExportAt(): Promise<string | null> {
+    return this.settings.get('last_export_at');
+  }
+
+  /**
+   * Exports now and opens the Android share sheet (a download in the
+   * browser). Resolves to false, and records nothing, if the user cancels.
+   */
+  async exportAndShare(now: Date = new Date()): Promise<boolean> {
     const file = await this.build(now);
-    await this.files.share(backupFileName(now), this.serialize(file));
-    await this.settings.set('last_export_at', file.exportedAt);
+    const shared = await this.files.share(backupFileName(now), this.serialize(file));
+    if (shared) {
+      await this.settings.set('last_export_at', file.exportedAt);
+    }
+    return shared;
   }
 }

@@ -7,6 +7,7 @@ import { CategoriesRepository } from '../../repositories/categories.repository';
 import { SettingsRepository } from '../../repositories/settings.repository';
 import { TagsRepository } from '../../repositories/tags.repository';
 import { TransactionsRepository } from '../../repositories/transactions.repository';
+import { DataChangesService } from '../data-changes.service';
 
 import { BackupFilesService } from './backup-files.service';
 import type { BackupFile, BackupSummary } from './backup-format';
@@ -52,6 +53,7 @@ export class ImportService {
   private readonly settings = inject(SettingsRepository);
   private readonly exporter = inject(ExportService);
   private readonly files = inject(BackupFilesService);
+  private readonly changes = inject(DataChangesService);
 
   /** Validates the file text (throws BackupError) and upgrades older versions. */
   parse(text: string): BackupFile {
@@ -81,6 +83,7 @@ export class ImportService {
       await this.writeRows(file, tx);
       await this.settings.setMany(file.settings, tx);
     });
+    this.changes.notify();
   }
 
   /**
@@ -90,7 +93,7 @@ export class ImportService {
    * missing locally are added.
    */
   async merge(file: BackupFile): Promise<MergeResult> {
-    return this.database.db.transaction(async (tx) => {
+    const result = await this.database.db.transaction(async (tx) => {
       const accounts = newerRows(file.accounts, await this.accounts.findAllIncludingDeleted(tx));
       const categories = newerRows(file.categories, await this.categories.findAllIncludingDeleted(tx));
       const transactions = newerRows(file.transactions, await this.transactions.findAllIncludingDeleted(tx));
@@ -143,6 +146,8 @@ export class ImportService {
         transactionTags: transactionTags.length,
       };
     });
+    this.changes.notify();
+    return result;
   }
 
   /** Writes rows in foreign-key order: referenced tables first. */

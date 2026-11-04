@@ -10,6 +10,7 @@ import { TagsRepository } from '../../repositories/tags.repository';
 import { TransactionsRepository } from '../../repositories/transactions.repository';
 import { AccountService } from '../account.service';
 import { CategoryService } from '../category.service';
+import { DataChangesService } from '../data-changes.service';
 import { TransactionService } from '../transaction.service';
 
 import { BackupFilesService } from './backup-files.service';
@@ -118,7 +119,7 @@ describe('backup export / import', () => {
   let importer: ImportService;
 
   beforeEach(async () => {
-    files = { share: vi.fn().mockResolvedValue(undefined), writeSafetyBackup: vi.fn().mockResolvedValue(undefined) };
+    files = { share: vi.fn().mockResolvedValue(true), writeSafetyBackup: vi.fn().mockResolvedValue(undefined) };
     TestBed.configureTestingModule({
       providers: [
         { provide: DatabaseService, useValue: database },
@@ -170,6 +171,13 @@ describe('backup export / import', () => {
       expect(name).toMatch(/^palanche-backup-2026-11-15-\d{4}\.json$/);
       expect(JSON.parse(content).exportedAt).toBe('2026-11-15T18:00:00.000Z');
       expect(await TestBed.inject(SettingsRepository).get('last_export_at')).toBe('2026-11-15T18:00:00.000Z');
+    });
+
+    it('does not record the export when the user cancels the share sheet', async () => {
+      files.share.mockResolvedValueOnce(false);
+
+      expect(await exporter.exportAndShare(NOW)).toBe(false);
+      expect(await TestBed.inject(SettingsRepository).get('last_export_at')).toBe('2026-10-01T00:00:00.000Z');
     });
   });
 
@@ -245,6 +253,13 @@ describe('backup export / import', () => {
 
       await expect(importer.replace(backup, NOW)).rejects.toThrow('disk full');
       expect(await dumpTables(target)).toEqual(before);
+    });
+
+    it('tells the pages that the data changed', async () => {
+      const changes = TestBed.inject(DataChangesService);
+      const before = changes.version();
+      await importer.replace(backup, NOW);
+      expect(changes.version()).toBe(before + 1);
     });
 
     it('changes nothing if the safety copy cannot be written', async () => {

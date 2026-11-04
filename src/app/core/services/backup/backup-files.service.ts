@@ -15,11 +15,15 @@ const SAFETY_COPIES = 5;
  */
 @Injectable({ providedIn: 'root' })
 export class BackupFilesService {
-  /** Writes the file to the cache and opens the share sheet; in the browser, downloads it. */
-  async share(fileName: string, content: string): Promise<void> {
+  /**
+   * Writes the file to the cache and opens the share sheet; in the browser,
+   * downloads it. Resolves to false if the user closes the share sheet
+   * without choosing where to send the file.
+   */
+  async share(fileName: string, content: string): Promise<boolean> {
     if (!Capacitor.isNativePlatform()) {
       this.download(fileName, content);
-      return;
+      return true;
     }
     const { uri } = await Filesystem.writeFile({
       path: fileName,
@@ -27,7 +31,16 @@ export class BackupFilesService {
       directory: Directory.Cache,
       encoding: Encoding.UTF8,
     });
-    await Share.share({ title: 'Backup Palanche', files: [uri], dialogTitle: 'Salva o invia il backup' });
+    try {
+      await Share.share({ title: 'Backup Palanche', files: [uri], dialogTitle: 'Salva o invia il backup' });
+      return true;
+    } catch (error) {
+      // The plugin rejects with "Share canceled" when the sheet is dismissed.
+      if (error instanceof Error && /cancel/i.test(error.message)) {
+        return false;
+      }
+      throw error;
+    }
   }
 
   /**

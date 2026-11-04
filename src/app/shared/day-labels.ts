@@ -43,3 +43,10 @@ export function shortDay(date: IsoDate, now: Date = new Date()): string {
   }
   return (isCurrentYear(date, now) ? shortFormat : shortYearFormat).format(parseIsoDate(date));
 }
+
+const timestampFormat = new Intl.DateTimeFormat('it-IT', { dateStyle: 'medium', timeStyle: 'short' });
+
+/** A technical ISO timestamp (e.g. the last export) in local time: "4 nov 2026, 11:50". */
+export function formatTimestamp(iso: string): string {
+  return timestampFormat.format(new Date(iso));
+}

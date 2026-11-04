@@ -1,4 +1,4 @@
-import { dayHeading, relativeDay, shortDay } from './day-labels';
+import { dayHeading, formatTimestamp, relativeDay, shortDay } from './day-labels';
 
 // Sunday 15 November 2026, mid-afternoon.
 const now = new Date(2026, 10, 15, 15, 30);
@@ -27,5 +27,10 @@ describe('day labels', () => {
     expect(shortDay('2026-11-14', now)).toBe('Ieri');
     expect(shortDay('2026-11-02', now)).toBe('2 nov');
     expect(shortDay('2025-12-24', now)).toBe('24 dic 2025');
+  });
+
+  it('formats a timestamp in local time', () => {
+    const local = new Date(2026, 10, 4, 11, 50);
+    expect(formatTimestamp(local.toISOString())).toBe('4 nov 2026, 11:50');
   });
 });
