@@ -1,10 +1,26 @@
-import { formatCents, formatSignedCents, formatTransactionAmount, parseAmountToCents } from './money';
+import {
+  formatCents,
+  formatCentsCompact,
+  formatSignedCents,
+  formatTransactionAmount,
+  parseAmountToCents,
+} from './money';
 
 // Expected strings use a non-breaking space (U+00A0) and the minus sign (U+2212).
 const S = ' ';
 const M = '−';
 
 describe('money', () => {
+  describe('formatCentsCompact', () => {
+    it('drops the decimals of whole euros only', () => {
+      expect(formatCentsCompact(95000)).toBe(`€${S}950`);
+      expect(formatCentsCompact(123400)).toBe(`€${S}1.234`);
+      expect(formatCentsCompact(450)).toBe(`€${S}4,50`);
+      expect(formatCentsCompact(0)).toBe(`€${S}0`);
+      expect(formatCentsCompact(-1200)).toBe(`${M}€${S}12`);
+    });
+  });
+
   describe('formatCents', () => {
     it('formats with the euro symbol first and Italian separators', () => {
       expect(formatCents(123456)).toBe(`€${S}1.234,56`);

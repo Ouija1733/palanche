@@ -44,6 +44,15 @@ export function formatCents(cents: number): string {
 }
 
 /**
+ * Like formatCents, but whole euros lose the ",00": "€ 950", "€ 4,50". For
+ * compact figures such as "€ 112 / € 100" in the budget lists.
+ */
+export function formatCentsCompact(cents: number): string {
+  const text = formatCents(cents);
+  return cents % 100 === 0 ? text.slice(0, -3) : text;
+}
+
+/**
  * Formats a transaction amount with the sign given by its type:
  * expense "− € 38,20", income "+ € 1.500,00", transfer "€ 200,00" (neutral).
  */
